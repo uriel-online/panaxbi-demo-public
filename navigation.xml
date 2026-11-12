@@ -1,0 +1,8 @@
+<?xml-stylesheet type="text/xsl" href="sitemap.xslt" target="#sitemap"?>
+<?xml-stylesheet type="text/xsl" href="sitemap_horizontal.xslt" target="#sitemap_horizontal"?>
+<sitemap>
+  <item title="Reportes">
+    <item title="Estado de Resultados Mensual" target="#estado_resultados_mensual"/>
+    <item title="Tablero de Dirección" target="#tablero_direccion"/>
+  </item>
+</sitemap>
