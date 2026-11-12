@@ -2225,6 +2225,8 @@ xover.sources.defaults["#shell"] = xover.xml.createDocument('<?xml-stylesheet ty
 
 xover.sources.defaults["#settings"] = xover.xml.createDocument('<?xml-stylesheet type="text/xsl" href="settings.xslt" role="settings" target="@#shell @#settings"?><shell:settings xmlns:shell="http://panax.io/shell"/>');
 
+xover.sources.defaults["#menu"] = xover.xml.createDocument('<?xml-stylesheet type="text/xsl" href="menus.xslt" target="@#shell @#menu"?><menus><settings/></menus>');
+
 xover.ProcessingInstruction = function (stylesheet) {
     if (!(this instanceof xover.ProcessingInstruction)) return new xover.ProcessingInstruction(stylesheet);
     let attribs = xover.json.fromAttributes(stylesheet.data);
