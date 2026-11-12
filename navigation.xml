@@ -5,4 +5,8 @@
     <item title="Estado de Resultados Mensual" target="#estado_resultados_mensual"/>
     <item title="Tablero de Dirección" target="#tablero_direccion"/>
   </item>
+  <item title="SOADDI">
+    <item title="Estado de Resultados" target="https://server.panaxbi.com/gateway.asp?action=soaddi-web&amp;view=income-mxn"/>
+    <item title="Balance General" target="https://server.panaxbi.com/gateway.asp?action=soaddi-web&amp;view=balance-mxn"/>
+  </item>
 </sitemap>
