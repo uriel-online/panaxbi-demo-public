@@ -182,7 +182,8 @@ xo.listener.on('progress', async function ({ percent }) {
         let target = progress[0].parentNode ?.querySelector('progress');
         if (target) {
             target.style.display = 'inline'
-            target.value = percent;
+            if (Number.isFinite(percent)) target.value = percent;
+            else target.removeAttribute("value");
         }
     }
 })
