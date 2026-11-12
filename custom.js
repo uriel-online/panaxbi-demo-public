@@ -126,14 +126,33 @@ xo.listener.on('xo.Source:fetch', async function ({ settings = {} }) {
 Object.defineProperty(xo.session, 'login', {
     value: async function (username, password, connection_id) {
         try {
-            xover.session.user_login = username
             xover.session.status = 'authorizing';
-            let response = await xover.server.login(new URLSearchParams({ 'connection_id': connection_id }), { headers: { authorization: `Basic ${btoa(username + ':' + password)}` } });
+            const response = await xover.server.login(
+                new URLSearchParams({ 'connection_id': connection_id }),
+                { headers: { accept: 'application/json', authorization: `Basic ${btoa(username + ':' + password)}` } }
+            );
+            if (response?.success !== true) {
+                throw new Error('El servidor no confirmó el inicio de sesión.');
+            }
+            if (response.user_login === 'taxan') {
+                const report = 'https://server.panaxbi.com/gateway.asp?action=soaddi-web&view=income-mxn';
+                if (response.redirect !== report) {
+                    throw new Error('El destino del módulo Taxan no es válido.');
+                }
+                xover.session.setKey('user_login', undefined);
+                xover.session.setKey('status', 'unauthorized');
+                location.replace(report);
+                return;
+            }
+            if (response.user_login !== 'guest') {
+                throw new Error('El usuario devuelto por el servidor no es válido.');
+            }
+            xover.session.user_login = response.user_login;
             xover.session.status = 'authorized';
             xover.stores.active.render();
         } catch (e) {
             xover.session.status = 'unauthorized';
-            Promise.reject(e);
+            throw e;
         }
     }, writable: true, configurable: true
 })
