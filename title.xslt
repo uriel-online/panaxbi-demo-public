@@ -1,4 +1,4 @@
-﻿<xsl:stylesheet version="1.0"
+<xsl:stylesheet version="1.0"
 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 xmlns="http://www.w3.org/1999/xhtml"
 xmlns:js="http://panax.io/xover/javascript"
@@ -7,40 +7,19 @@ xmlns:state="http://panax.io/state"
 xmlns:px="http://panax.io/entity"
 exclude-result-prefixes="#default xsl px site"
 >
-	<xsl:output method="xml"
+	<xsl:import href="widgets/title.xslt"/>
+  <xsl:output method="xml"
 	   omit-xml-declaration="yes"
 	   indent="yes"/>
-	<xsl:param name="site:seed">''</xsl:param>
+	<xsl:param name="site:seed" select="&apos;&apos;"/>
 
-	<xsl:template match="/">
+	<xsl:variable name="route" select="substring-before(concat($site:seed, &apos;?&apos;), &apos;?&apos;)"/>
+	<xsl:template match="/" priority="2">
 		<h1>
-			<xsl:apply-templates/>
+			<xsl:choose>
+				<xsl:when test="key('title', $route)"><xsl:value-of select="key('title', $route)"/></xsl:when>
+				<xsl:otherwise>Panax BI</xsl:otherwise>
+			</xsl:choose>
 		</h1>
-	</xsl:template>
-
-	<xsl:template match="*">
-		<xsl:value-of select="substring-before(translate(concat($site:seed,'?'),'_#',' '),'?')"/>
-	</xsl:template>
-
-	<xsl:template match="model">
-		<xsl:choose>
-			<xsl:when test="$site:seed=''">
-			</xsl:when>
-			<xsl:otherwise>
-				<xsl:value-of select="substring-before(translate(concat($site:seed,'?'),'_#',' '),'?')"/>
-			</xsl:otherwise>
-		</xsl:choose>
-	</xsl:template>
-
-	<xsl:template match="*[@headerText]">
-		<xsl:apply-templates select="@headerText"/>
-	</xsl:template>
-
-	<xsl:template match="@headerText">
-		<xsl:value-of select="."/>
-	</xsl:template>
-
-	<xsl:template match="@headerText[starts-with(.,'Tipo')]">
-		<xsl:value-of select="concat(substring(.,1,5), 'de ', substring(.,6))"/>
 	</xsl:template>
 </xsl:stylesheet>

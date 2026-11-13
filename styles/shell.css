@@ -2900,3 +2900,209 @@ header [class*="__inferior"] .box__mobile {
 }
 
 .report-loader progress { width: 100%; }
+
+/* The shared sitemap renders its own aside inside XOver's sitemap host. */
+#shell > #sitemap .sidebar {
+    position: static;
+    width: 100%;
+    margin: 0;
+    padding: 0 !important;
+}
+#shell > #sitemap summary {
+    cursor: pointer;
+}
+
+#shell {
+    --nav-height: 58px;
+    --margin-top-sitemap: var(--nav-height);
+    --portal-ink: #18334d;
+}
+#shell > .portal-shell-header {
+    position: relative;
+    z-index: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    height: var(--nav-height);
+    margin: 0;
+    padding: 0 16px;
+    background: white;
+    color: var(--portal-ink);
+    border-bottom: 1px solid #dde5eb;
+    box-shadow: 0 2px 10px #18334d12;
+}
+#shell .portal-shell-brand,
+#shell .portal-shell-menu,
+#shell .portal-report-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+#shell .portal-report-actions[hidden] { display: none; }
+#shell .portal-shell-menu { position: relative; z-index: 1030; justify-content: flex-end; }
+#shell .portal-shell-brand img {
+    display: block;
+    width: auto;
+    height: 38px;
+    object-fit: contain;
+}
+#shell .portal-shell-brand > a { position: relative; z-index: 1040; flex: none; }
+#shell .portal-shell-header h1 {
+    position: static;
+    margin: 0;
+    color: inherit;
+    font: 600 clamp(1rem, 2vw, 1.35rem)/1.2 "Segoe UI", Arial, sans-serif;
+    text-align: center;
+    text-transform: none;
+}
+#shell .portal-shell-header button:not(.dropdown-item) {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 4px 8px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+#shell .portal-shell-header button:not(.dropdown-item):hover { background: #eef3f7; }
+#shell .portal-shell-header .menu_toggle {
+    position: relative;
+    z-index: 1040;
+    font-size: 1.3rem;
+}
+#shell .portal-shell-header .menu_toggle[aria-expanded="true"] { color: #fff; }
+#shell .portal-shell-header .menu_toggle:disabled,
+body:has(.report-loader) #shell .portal-shell-header .menu_toggle[aria-expanded="false"] {
+    color: #929b98;
+    background: transparent;
+    cursor: not-allowed;
+}
+#shell .portal-shell-header .menu_toggle[aria-expanded="true"]:is(:hover, :focus-visible) {
+    background: #344e63;
+}
+#shell .portal-shell-menu svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+#shell .portal-shell-menu .dropdown-menu { box-shadow: 0 6px 16px #18334d24; }
+
+@media (max-width: 680px) {
+    #shell { --nav-height: 94px; }
+    #shell > .portal-shell-header {
+        grid-template-columns: 1fr auto;
+        grid-template-rows: 48px 1fr;
+        gap: 0 8px;
+    }
+    #shell .portal-shell-title { grid-area: 2 / 1 / 3 / 3; }
+    #shell .portal-shell-menu { grid-area: 1 / 2; }
+}
+@media print {
+    @page taxan-report { size: letter landscape; margin: 0.5in; }
+    body:has(#shell .taxan-report) { page: taxan-report; }
+    #shell > .portal-shell-header, #shell > #sitemap, #shell > footer,
+    #shell > .settings, #shell:has(.taxan-report) > .page-menu,
+    #shell .taxan-filters { display: none !important; }
+    #shell {
+        display: block;
+        height: auto !important;
+        min-height: 0 !important;
+        background: white;
+    }
+    #shell::after { content: none; }
+    body:has(#shell .taxan-report) { overflow: visible; }
+    #shell > main, #shell .taxan-report .excel-scroll {
+        width: auto;
+        height: auto;
+        overflow: visible;
+    }
+    #shell .taxan-report { padding: 0; background: white; }
+    #shell .taxan-report .excel-sheet { zoom: var(--taxan-print-scale, 1); }
+}
+
+/* PanaxBI supplies the portal header through the shared shell title slot. */
+#shell:has(> .portal-shell-header) > nav.navbar { display: none; }
+#shell > .portal-shell-header { flex-shrink: 0; }
+#shell > main { min-height: 0; }
+
+@media screen {
+    /* Keep the layout in place before XOver renders the report and its controls. */
+    #shell {
+        display: flex;
+        flex-direction: column;
+        height: 100vh !important;
+    }
+    #shell > main {
+        flex: 1 1 0;
+        overflow-y: auto;
+    }
+    #shell > footer {
+        flex-shrink: 0;
+        margin-top: auto;
+    }
+}
+
+#shell > #sitemap {
+    --margin-top-sitemap: 0px;
+    --padding-top-sitemap: 0px;
+    --margin-bottom: 0px;
+    z-index: 1035;
+    height: 100%;
+    max-width: min(299px, 100%);
+    background: #263b4d !important;
+    color: #fff;
+}
+#shell.sitemap_collapsed > #sitemap { visibility: hidden; }
+#shell > #sitemap :is(.sidebar, .sidebar-link) { background: #263b4d !important; }
+#shell > #sitemap .sitemap-toolbar {
+    display: flex;
+    align-items: center;
+    height: 65px;
+    padding: 0 26px;
+    list-style: none;
+}
+#shell > #sitemap .sitemap-toolbar button {
+    margin-left: auto;
+    border: 0;
+    background: transparent;
+    color: #aebbc5;
+    font-size: 28px;
+    line-height: 1;
+}
+#shell > #sitemap summary {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 28px 10px 16px;
+    color: #fff;
+    font-size: 16px;
+    list-style: none;
+}
+#shell > #sitemap summary::after {
+    content: "";
+    width: 6px;
+    height: 6px;
+    margin-left: auto;
+    border: solid currentColor;
+    border-width: 0 1px 1px 0;
+    transform: rotate(45deg);
+}
+#shell > #sitemap details[open] > summary::after { transform: rotate(225deg); }
+#shell > #sitemap summary svg {
+    width: 22px;
+    height: 22px;
+    margin: 0;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+}
+#shell > #sitemap .sidebar-dropdown .sidebar-link { color: #e0e8ef; }
+#shell > #sitemap :is(summary, a.sidebar-link):hover { background: #344e63 !important; }

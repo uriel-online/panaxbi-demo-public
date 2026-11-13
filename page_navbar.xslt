@@ -1,4 +1,4 @@
-﻿<xsl:stylesheet version="1.0"
+<xsl:stylesheet version="1.0"
 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 xmlns="http://www.w3.org/1999/xhtml"
 xmlns:xo="http://panax.io/xover"
@@ -15,7 +15,7 @@ xmlns:widget="http://panax.io/widget"
 exclude-result-prefixes="#default xsl px xsi xo data site widget state"
 >
 	<xsl:import href="headers.xslt"/>
-	<xsl:import href="widgets/page_navbar.xslt"/>
+	<xsl:import href="templates/legacy-page-navbar.xslt"/>
 
 	<xsl:template mode="widget" match="@*"/>
 

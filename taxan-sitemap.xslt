@@ -8,8 +8,8 @@
   <xsl:template match="/report">
     <xsl:variable name="years" select="comparativo/cuenta/saldo[generate-id()=generate-id(key('annual-year',@periodo)[1])]"/>
     <section class="taxan-report"><style>.taxan-report{padding:18px;background:#f4f5f8;color:#111;font:14px Arial,sans-serif}
-.taxan-report h1{font-size:22px;color:#18334d;margin:0 0 12px}
-.taxan-report nav{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
+.taxan-report nav.taxan-filters{display:flex;flex-direction:column;align-items:flex-start;gap:4px;margin:0 0 16px}
+.taxan-report .taxan-data-note{margin:0;font-size:.85em;line-height:1.4}
 .taxan-report nav a{padding:7px 10px;border:1px solid #aab7c6;border-radius:4px;color:#18334d;text-decoration:none;background:white}
 .taxan-report nav a[aria-current]{color:white;background:#18334d}
 .taxan-report .excel-scroll{overflow:auto}.taxan-report .excel-sheet{border-collapse:collapse;table-layout:fixed;background:white}
@@ -195,11 +195,9 @@
 .taxan-report .excel-sheet .xl252 {font-size:9.0pt; font-weight:700; text-align:center; border-top:none; border-right:none; border-bottom:1.0pt solid windowtext; border-left:none; background:#99CCFF;}
 .taxan-report .excel-sheet .xl253 {font-size:9.0pt; font-weight:700; text-align:center; border-top:none; border-right:1.0pt solid windowtext; border-bottom:1.0pt solid windowtext; border-left:none; background:#99CCFF;}
 .taxan-report .excel-sheet .xl254 {font-size:9.0pt; font-weight:700; text-align:center; vertical-align:middle; border:.5pt solid windowtext; background:yellow;}.taxan-report [hidden]{display:none!important}.taxan-years{display:flex;gap:.65rem;align-items:center}.taxan-years label{white-space:nowrap}</style>
-      <h1>SOADDI Financial Statements</h1>
         <xsl:call-template name="taxan-navbar">
           <xsl:with-param name="years" select="$years"/>
         </xsl:call-template>
-        <p class="text-muted">2023 y 2024 son datos simulados. <xsl:if test="starts-with(@id,'income')">Las columnas simuladas resumen el periodo abril–diciembre.</xsl:if></p>
         <div class="excel-scroll">
           <xsl:choose>
             <xsl:when test="@id='income-mxn'">
@@ -161377,7 +161375,7 @@
                     <td data-year="2026" class="xl149">
                       <xsl:choose>
                         <xsl:when test="'number'='number'">
-                          <xsl:value-of select="format-number(number('2026.000000000000'),'#,##0;(#,##0)')"/>
+                          <xsl:text>2026</xsl:text>
                         </xsl:when>
                         <xsl:otherwise>
                           <xsl:value-of select="'2026.000000000000'"/>
@@ -161388,7 +161386,7 @@
                     <td data-year="2025" class="xl149">
                       <xsl:choose>
                         <xsl:when test="'number'='number'">
-                          <xsl:value-of select="format-number(number('2025.000000000000'),'#,##0;(#,##0)')"/>
+                          <xsl:text>2025</xsl:text>
                         </xsl:when>
                         <xsl:otherwise>
                           <xsl:value-of select="'2025.000000000000'"/>
@@ -161415,7 +161413,7 @@
                     <td data-year="2026" class="xl149">
                       <xsl:choose>
                         <xsl:when test="'number'='number'">
-                          <xsl:value-of select="format-number(number('2026.000000000000'),'#,##0;(#,##0)')"/>
+                          <xsl:text>2026</xsl:text>
                         </xsl:when>
                         <xsl:otherwise>
                           <xsl:value-of select="'2026.000000000000'"/>
@@ -161426,7 +161424,7 @@
                     <td data-year="2025" class="xl149">
                       <xsl:choose>
                         <xsl:when test="'number'='number'">
-                          <xsl:value-of select="format-number(number('2025.000000000000'),'#,##0;(#,##0)')"/>
+                          <xsl:text>2025</xsl:text>
                         </xsl:when>
                         <xsl:otherwise>
                           <xsl:value-of select="'2025.000000000000'"/>
@@ -166516,7 +166514,7 @@
                     <td data-year="2026" class="xl149">
                       <xsl:choose>
                         <xsl:when test="'number'='number'">
-                          <xsl:value-of select="format-number(number('2026.000000000000'),'#,##0;(#,##0)')"/>
+                          <xsl:text>2026</xsl:text>
                         </xsl:when>
                         <xsl:otherwise>
                           <xsl:value-of select="'2026.000000000000'"/>
@@ -166527,7 +166525,7 @@
                     <td data-year="2025" class="xl149">
                       <xsl:choose>
                         <xsl:when test="'number'='number'">
-                          <xsl:value-of select="format-number(number('2025.000000000000'),'#,##0;(#,##0)')"/>
+                          <xsl:text>2025</xsl:text>
                         </xsl:when>
                         <xsl:otherwise>
                           <xsl:value-of select="'2025.000000000000'"/>
@@ -166554,7 +166552,7 @@
                     <td data-year="2026" class="xl149">
                       <xsl:choose>
                         <xsl:when test="'number'='number'">
-                          <xsl:value-of select="format-number(number('2026.000000000000'),'#,##0;(#,##0)')"/>
+                          <xsl:text>2026</xsl:text>
                         </xsl:when>
                         <xsl:otherwise>
                           <xsl:value-of select="'2026.000000000000'"/>
@@ -166565,7 +166563,7 @@
                     <td data-year="2025" class="xl149">
                       <xsl:choose>
                         <xsl:when test="'number'='number'">
-                          <xsl:value-of select="format-number(number('2025.000000000000'),'#,##0;(#,##0)')"/>
+                          <xsl:text>2025</xsl:text>
                         </xsl:when>
                         <xsl:otherwise>
                           <xsl:value-of select="'2025.000000000000'"/>

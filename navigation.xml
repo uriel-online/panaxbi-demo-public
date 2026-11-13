@@ -5,7 +5,7 @@
     <item title="Estado de Resultados Mensual" target="#estado_resultados_mensual"/>
     <item title="Tablero de Dirección" target="#tablero_direccion"/>
   </item>
-  <item title="Taxan" user="taxan">
+  <item title="Reportes" user="taxan">
     <item title="Income Statement MXN" target="#taxan/income-mxn"/>
     <item title="Income Statement USD" target="#taxan/income-usd"/>
     <item title="Balance Sheet MXN" target="#taxan/balance-mxn"/>

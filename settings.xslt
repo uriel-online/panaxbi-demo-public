@@ -260,7 +260,7 @@ exclude-result-prefixes="#default session sitemap shell"
                       <div class="list-group">
                         <button type="button" class="list-group-item list-group-item-action" onclick="xover.data.undo();">Deshacer</button>
                         <button type="button" class="list-group-item list-group-item-action" onclick="xover.data.redo()">Rehacer</button>
-                        <button type="button" class="list-group-item list-group-item-action" onclick="xover.dom.print()">Imprimir</button>
+                        <button type="button" class="list-group-item list-group-item-action" onclick="window.print()">Imprimir</button>
                         <button type="button" class="list-group-item list-group-item-action" onclick="generateExcelFile(document.querySelector('table'),xover.stores.active.tag)">Enviar a excel...</button>
                         <xsl:if test="$state:show_empty!=''">
                           <button type="button" class="list-group-item list-group-item-action" onclick="xo.state.show_empty = !xo.state.show_empty">

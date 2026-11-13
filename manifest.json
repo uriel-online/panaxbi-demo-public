@@ -9,6 +9,15 @@
     "#": "#shell",
     "#login": "login.xml",
     "#sitemap": "navigation.xml",
+    "widgets/page_controls.xslt": "page_controls.xslt",
+    "widgets/page_navbar.xslt": "page_navbar.xslt",
+    "widgets/shell_buttons.xslt": "shell_buttons.xslt",
+    "widgets/settings.xslt": "settings.xslt",
+    "widgets/shell/page_navbar.xslt": "page_navbar.xslt",
+    "widgets/shell/page_controls.xslt": "page_controls.xslt",
+    "widgets/shell/page_controls.offcanvas.xslt": "page_controls.offcanvas.xslt",
+    "widgets/shell/sitemap.xslt": "sitemap.xslt",
+    "widgets/shell/widgets/settings.xslt": "settings.xslt",
     "#tablero_direccion": {
       "dashboardRequest": {
         "command": "[#panax].[getBalancedScorecard]"
