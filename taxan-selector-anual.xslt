@@ -1,8 +1,13 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" version="1.0">
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" xmlns:state="http://panax.io/state" exclude-result-prefixes="state" version="1.0">
   <xsl:output method="xml" encoding="UTF-8" omit-xml-declaration="yes"/>
   <xsl:key name="saldo" match="report/saldo" use="@clave"/>
+  <xsl:include href="templates/taxan-navbar.xslt"/>
+  <xsl:key name="annual-year" match="comparativo/cuenta/saldo" use="@periodo"/>
   <xsl:template match="/report">
+    <xsl:variable name="years" select="comparativo/cuenta/saldo[generate-id()=generate-id(key('annual-year',@periodo)[1])]"/>
+    <xsl:variable name="selected-year" select="@state:taxan_year"/>
+    <xsl:variable name="columns" select="$years"/>
     <section class="taxan-report"><style>.taxan-report{padding:18px;background:#f4f5f8;color:#111;font:14px Arial,sans-serif}
 .taxan-report h1{font-size:22px;color:#18334d;margin:0 0 12px}
 .taxan-report nav{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
@@ -190,55 +195,36 @@
 .taxan-report .excel-sheet .xl251 {font-size:9.0pt; font-weight:700; text-align:center; border-top:none; border-right:none; border-bottom:1.0pt solid windowtext; border-left:1.0pt solid windowtext; background:#99CCFF;}
 .taxan-report .excel-sheet .xl252 {font-size:9.0pt; font-weight:700; text-align:center; border-top:none; border-right:none; border-bottom:1.0pt solid windowtext; border-left:none; background:#99CCFF;}
 .taxan-report .excel-sheet .xl253 {font-size:9.0pt; font-weight:700; text-align:center; border-top:none; border-right:1.0pt solid windowtext; border-bottom:1.0pt solid windowtext; border-left:none; background:#99CCFF;}
-.taxan-report .excel-sheet .xl254 {font-size:9.0pt; font-weight:700; text-align:center; vertical-align:middle; border:.5pt solid windowtext; background:yellow;}.taxan-report .taxan-history{margin:0 0 1rem}.taxan-history summary{cursor:pointer;font-weight:700}.taxan-history p{margin:.5rem 0}.taxan-history table{border-collapse:collapse;width:100%;background:white}.taxan-history th,.taxan-history td{padding:.35rem .6rem;border-bottom:1px solid #d9e3ed}.taxan-history thead{background:#99ccff}.taxan-history td:nth-child(n+3){text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}</style>
+.taxan-report .excel-sheet .xl254 {font-size:9.0pt; font-weight:700; text-align:center; vertical-align:middle; border:.5pt solid windowtext; background:yellow;}.taxan-report .taxan-history{margin:0 0 1rem}.taxan-history .excel-scroll{max-height:26rem}.taxan-history p{margin:.5rem 0}.taxan-history table{border-collapse:collapse;width:100%;background:white}.taxan-history th,.taxan-history td{padding:.35rem .6rem;border-bottom:1px solid #d9e3ed}.taxan-history thead{background:#99ccff}.taxan-history td:nth-child(n+3){text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}</style>
       <h1>SOADDI Financial Statements</h1>
-        <nav aria-label="Financial statements">
-          <a href="#taxan/income-mxn">
-            <xsl:if test="@id='income-mxn'">
-              <xsl:attribute name="aria-current">page</xsl:attribute>
-            </xsl:if>
-            <xsl:text>Income Statement MXN</xsl:text>
-          </a>
-          <a href="#taxan/income-usd">
-            <xsl:if test="@id='income-usd'">
-              <xsl:attribute name="aria-current">page</xsl:attribute>
-            </xsl:if>
-            <xsl:text>Income Statement USD</xsl:text>
-          </a>
-          <a href="#taxan/balance-mxn">
-            <xsl:if test="@id='balance-mxn'">
-              <xsl:attribute name="aria-current">page</xsl:attribute>
-            </xsl:if>
-            <xsl:text>Balance Sheet MXN</xsl:text>
-          </a>
-          <a href="#taxan/balance-usd">
-            <xsl:if test="@id='balance-usd'">
-              <xsl:attribute name="aria-current">page</xsl:attribute>
-            </xsl:if>
-            <xsl:text>Balance Sheet USD</xsl:text>
-          </a>
-        </nav>
-        <details class="taxan-history">
-          <summary>Comparativo 2023–2026</summary>
+        <xsl:call-template name="taxan-navbar">
+          <xsl:with-param name="years" select="$years"/>
+          <xsl:with-param name="selected-year" select="$selected-year"/>
+        </xsl:call-template>
+        <section class="taxan-history" aria-label="Comparativo 2023–2026">
           <p>2023 y 2024 son datos simulados. <xsl:if test="starts-with(@id,'income')">Los importes de 2025 cubren abril a diciembre y los de 2026 corresponden a enero.</xsl:if></p>
           <div class="excel-scroll" tabindex="0" role="region" aria-label="Comparativo de cuatro años">
             <table>
-              <thead><tr><th scope="col">Cuenta / concepto</th><th scope="col">Centro</th><th scope="col">2023 · Simulado</th><th scope="col">2024 · Simulado</th><th scope="col">2025</th><th scope="col">2026</th></tr></thead>
+              <thead><tr><th scope="col">Cuenta / concepto</th><th scope="col">Centro</th><xsl:for-each select="$columns"><xsl:sort select="@periodo"/><th scope="col" data-year="{@periodo}"><xsl:if test="$selected-year and $selected-year!='all' and @periodo!=$selected-year"><xsl:attribute name="hidden">hidden</xsl:attribute></xsl:if><xsl:value-of select="@periodo"/><xsl:if test="@simulado='1'"> · Simulado</xsl:if></th></xsl:for-each></tr></thead>
               <tbody>
                 <xsl:for-each select="comparativo/cuenta">
                   <tr>
                     <th scope="row"><xsl:value-of select="@cuenta"/> · <xsl:value-of select="@concepto"/></th>
                     <td><xsl:value-of select="@centro"/></td>
-                    <xsl:call-template name="annual-balance"><xsl:with-param name="period" select="'2023'"/></xsl:call-template>
-                    <xsl:call-template name="annual-balance"><xsl:with-param name="period" select="'2024'"/></xsl:call-template>
-                    <xsl:call-template name="annual-balance"><xsl:with-param name="period" select="'2025'"/></xsl:call-template>
-                    <xsl:call-template name="annual-balance"><xsl:with-param name="period" select="'2026'"/></xsl:call-template>
+                    <xsl:variable name="account" select="."/>
+                    <xsl:for-each select="$columns">
+                      <xsl:sort select="@periodo"/>
+                      <xsl:variable name="period" select="@periodo"/>
+                      <xsl:call-template name="annual-balance">
+                        <xsl:with-param name="period" select="$period"/><xsl:with-param name="amount" select="$account/saldo[@periodo=$period]/@importe"/>
+                      </xsl:call-template>
+                    </xsl:for-each>
                   </tr>
                 </xsl:for-each>
               </tbody>
             </table>
           </div>
-        </details>
+        </section>
         <div class="excel-scroll">
           <xsl:choose>
             <xsl:when test="@id='income-mxn'">
@@ -170987,9 +170973,8 @@
         </div>
       </section></xsl:template>
   <xsl:template name="annual-balance">
-    <xsl:param name="period"/>
-    <xsl:variable name="amount" select="saldo[@periodo=$period]/@importe"/>
-    <td><xsl:choose>
+    <xsl:param name="period"/><xsl:param name="amount"/>
+    <td data-year="{$period}"><xsl:if test="/report/@state:taxan_year and /report/@state:taxan_year!='all' and $period!=/report/@state:taxan_year"><xsl:attribute name="hidden">hidden</xsl:attribute></xsl:if><xsl:choose>
       <xsl:when test="$amount"><xsl:value-of select="format-number(number($amount),'#,##0;(#,##0)')"/></xsl:when>
       <xsl:otherwise>—</xsl:otherwise>
     </xsl:choose></td>

@@ -1478,6 +1478,14 @@ xo.listener.on('render', ({ element }) => {
     }
 });
 
+document.addEventListener('change', event => {
+    const select = event.target;
+    if (select.id !== 'taxan-year' || !taxanView()) return;
+    for (const cell of select.closest('.taxan-report').querySelectorAll('.taxan-history [data-year]')) {
+        cell.hidden = select.value !== 'all' && cell.dataset.year !== select.value;
+    }
+});
+
 const requested = location.hash === '#login' ? history.state?.returnTo : location.hash;
 
 // XOver may resolve the active store as soon as it seeds history.

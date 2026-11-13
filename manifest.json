@@ -64,7 +64,7 @@
     "#taxan/income-mxn||#taxan/income-usd||#taxan/balance-mxn||#taxan/balance-usd": {
       "stylesheets": [
         {
-          "href": "taxan-comparativo.xslt",
+          "href": "taxan-selector-anual.xslt",
           "target": "@#shell main"
         }
       ],
