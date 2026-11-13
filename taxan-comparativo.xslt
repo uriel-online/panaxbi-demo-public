@@ -190,7 +190,7 @@
 .taxan-report .excel-sheet .xl251 {font-size:9.0pt; font-weight:700; text-align:center; border-top:none; border-right:none; border-bottom:1.0pt solid windowtext; border-left:1.0pt solid windowtext; background:#99CCFF;}
 .taxan-report .excel-sheet .xl252 {font-size:9.0pt; font-weight:700; text-align:center; border-top:none; border-right:none; border-bottom:1.0pt solid windowtext; border-left:none; background:#99CCFF;}
 .taxan-report .excel-sheet .xl253 {font-size:9.0pt; font-weight:700; text-align:center; border-top:none; border-right:1.0pt solid windowtext; border-bottom:1.0pt solid windowtext; border-left:none; background:#99CCFF;}
-.taxan-report .excel-sheet .xl254 {font-size:9.0pt; font-weight:700; text-align:center; vertical-align:middle; border:.5pt solid windowtext; background:yellow;}</style>
+.taxan-report .excel-sheet .xl254 {font-size:9.0pt; font-weight:700; text-align:center; vertical-align:middle; border:.5pt solid windowtext; background:yellow;}.taxan-report .taxan-history{margin:0 0 1rem}.taxan-history summary{cursor:pointer;font-weight:700}.taxan-history p{margin:.5rem 0}.taxan-history table{border-collapse:collapse;width:100%;background:white}.taxan-history th,.taxan-history td{padding:.35rem .6rem;border-bottom:1px solid #d9e3ed}.taxan-history thead{background:#99ccff}.taxan-history td:nth-child(n+3){text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}</style>
       <h1>SOADDI Financial Statements</h1>
         <nav aria-label="Financial statements">
           <a href="#taxan/income-mxn">
@@ -218,6 +218,27 @@
             <xsl:text>Balance Sheet USD</xsl:text>
           </a>
         </nav>
+        <details class="taxan-history">
+          <summary>Comparativo 2023–2026</summary>
+          <p>2023 y 2024 son datos simulados. <xsl:if test="starts-with(@id,'income')">Los importes de 2025 cubren abril a diciembre y los de 2026 corresponden a enero.</xsl:if></p>
+          <div class="excel-scroll" tabindex="0" role="region" aria-label="Comparativo de cuatro años">
+            <table>
+              <thead><tr><th scope="col">Cuenta / concepto</th><th scope="col">Centro</th><th scope="col">2023 · Simulado</th><th scope="col">2024 · Simulado</th><th scope="col">2025</th><th scope="col">2026</th></tr></thead>
+              <tbody>
+                <xsl:for-each select="comparativo/cuenta">
+                  <tr>
+                    <th scope="row"><xsl:value-of select="@cuenta"/> · <xsl:value-of select="@concepto"/></th>
+                    <td><xsl:value-of select="@centro"/></td>
+                    <xsl:call-template name="annual-balance"><xsl:with-param name="period" select="'2023'"/></xsl:call-template>
+                    <xsl:call-template name="annual-balance"><xsl:with-param name="period" select="'2024'"/></xsl:call-template>
+                    <xsl:call-template name="annual-balance"><xsl:with-param name="period" select="'2025'"/></xsl:call-template>
+                    <xsl:call-template name="annual-balance"><xsl:with-param name="period" select="'2026'"/></xsl:call-template>
+                  </tr>
+                </xsl:for-each>
+              </tbody>
+            </table>
+          </div>
+        </details>
         <div class="excel-scroll">
           <xsl:choose>
             <xsl:when test="@id='income-mxn'">
@@ -170965,4 +170986,12 @@
           </xsl:choose>
         </div>
       </section></xsl:template>
+  <xsl:template name="annual-balance">
+    <xsl:param name="period"/>
+    <xsl:variable name="amount" select="saldo[@periodo=$period]/@importe"/>
+    <td><xsl:choose>
+      <xsl:when test="$amount"><xsl:value-of select="format-number(number($amount),'#,##0;(#,##0)')"/></xsl:when>
+      <xsl:otherwise>—</xsl:otherwise>
+    </xsl:choose></td>
+  </xsl:template>
 </xsl:stylesheet>
