@@ -2,7 +2,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" xmlns:state="http://panax.io/state" exclude-result-prefixes="state" version="1.0">
   <xsl:output method="xml" encoding="UTF-8" omit-xml-declaration="yes"/>
   <xsl:key name="saldo" match="report/saldo" use="@clave"/>
-  <xsl:include href="templates/taxan-navbar-periodos.xslt"/>
+  <xsl:include href="templates/taxan-filtros.xslt"/>
   <xsl:key name="annual-saldo" match="comparativo/cuenta/saldo" use="@clave"/>
   <xsl:key name="annual-year" match="comparativo/cuenta/saldo" use="@periodo"/>
   <xsl:template match="/report">

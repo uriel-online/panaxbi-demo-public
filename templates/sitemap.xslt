@@ -15,6 +15,7 @@ exclude-result-prefixes="#default session sitemap shell state"
 	<xsl:key name="item" match="dummy" use="'#any'"/>
 	<xsl:key name="menu-item" match="dummy" use="'#any'"/>
 
+	<xsl:param name="session:user_login"/>
 	<xsl:template match="text()"/>
 
 	<xsl:template match="/">
@@ -187,7 +188,7 @@ li.sidebar-item.menu > a {
 			<div style="height:100%; overflow-y:scroll; margin-bottom: var(--margin-bottom)">
 				<a href="javascript:void(0)" class="closebtn" onclick="toggleSidebar()">&#215;</a>
 				<ul class="sidebar-nav">
-					<xsl:apply-templates/>
+					<xsl:apply-templates select="sitemap/item[not(@user) or @user=$session:user_login]"/>
 				</ul>
 			</div>
 		</aside>

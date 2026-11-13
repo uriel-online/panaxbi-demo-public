@@ -14,13 +14,14 @@ exclude-result-prefixes="#default session sitemap shell"
 	   indent="yes"/>
 
 	<xsl:template match="text()"/>
+	<xsl:param name="session:user_login"/>
 	<xsl:param name="session:debug">false</xsl:param>
 	<xsl:param name="js:cache_name">xover.session.cache_name.split('_').pop()</xsl:param>
 	<xsl:key name="expanded" match="*[@state:expanded='true']" use="true()"/>
 
 	<xsl:template match="sitemap">
 		<div id="sitemap_horizontal" xo-section="#sitemap" xo-stylesheet="sitemap_horizontal.xslt">
-			<xsl:apply-templates select="item[@state:active]"/>
+			<xsl:apply-templates select="item[@state:active][not(@user) or @user=$session:user_login]"/>
 		</div>
 	</xsl:template>
 
