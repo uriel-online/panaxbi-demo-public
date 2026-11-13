@@ -105,12 +105,33 @@ async function progressiveRequest(params) {
     return response;
 }
 
+async function dashboardRequest(params) {
+    const endpoint = new URL(xover.manifest.server.request);
+    for (const [key, value] of Object.entries(params || {})) {
+        if (value != null) endpoint.searchParams.set(key, value);
+    }
+    const response = await fetch(endpoint, {
+        credentials: 'include',
+        headers: { Accept: 'application/xml' }
+    });
+    if (!response.ok) throw response;
+
+    // Seed the large XML while detached to avoid queuing all its attributes as mutations.
+    const document = new DOMParser().parseFromString(await response.text(), 'application/xml');
+    if (document.documentElement.localName !== 'model') throw new Error('El servidor devolvió un tablero inesperado.');
+    document.seed();
+    attachDemoStylesheet(document, '#tablero_direccion');
+    return document;
+}
+
 xo.listener.on('change::fecha/@mth', async function ({ element }) {
     let document = this.ownerDocument;
     let definition = document.source.definition;
     let yr = element.getAttribute("yr");
     let mth = element.getAttribute("mth");
-    definition["server:request"]["@month"] = `${yr}${mth}`
+    const report = definition?.dashboardRequest || definition?.["server:request"];
+    if (!report) return;
+    report["@month"] = `${yr}${mth}`
     try {
         let target = document.selectFirst('//indicadores');
         let response = await document.source.fetch();
@@ -1348,7 +1369,10 @@ xo.listener.on(`change::@state:date`, function ({ value, event }) {
     let srcElement = (event.srcEvent || event).srcElement;
     let store = srcElement.store;
     if (!store) return;
-    store.source.definition["server:request"]["@month"] = value;
+    const definition = store.source.definition;
+    const report = definition?.dashboardRequest || definition?.["server:request"];
+    if (!report) return;
+    report["@month"] = value;
     store.document.fetch();
 })
 

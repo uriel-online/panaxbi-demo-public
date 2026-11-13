@@ -9,7 +9,7 @@
     "#": "#shell",
     "#sitemap": "navigation.xml",
     "#tablero_direccion": {
-      "server:request": {
+      "dashboardRequest": {
         "command": "[#panax].[getBalancedScorecard]"
       }
     },
