@@ -50,6 +50,7 @@ async function progressiveRequest(params) {
     const query = new URLSearchParams(Object.entries(params).filter(([, value]) => value != null));
     const response = xo.server.request.call(this, query, {
         credentials: 'include',
+        resumable: false,
         headers: { Accept: 'application/xml' }
     }).then(document => {
         attachDemoStylesheet(document, '#estado_resultados_mensual');
@@ -95,8 +96,6 @@ async function progressiveRequest(params) {
         } else {
             return Promise.resolve(document);
         }
-    }).catch(e => {
-        return Promise.reject(e);
     }).finally(() => {
         loading && loading.forEach(el => el.remove());
     });
@@ -114,6 +113,7 @@ async function dashboardRequest(params) {
         credentials: 'include',
         headers: { Accept: 'application/xml' }
     });
+    if (await recoverGuestSession(response)) return;
     if (!response.ok) throw response;
 
     // Seed the large XML while detached to avoid queuing all its attributes as mutations.
@@ -150,56 +150,123 @@ xo.listener.on('xo.Source:fetch', async function ({ settings = {} }) {
     progress && progress.remove();
 })
 
+const guestReports = new Set(['#estado_resultados_mensual', '#tablero_direccion']);
+const taxanViews = new Set(['income-mxn', 'income-usd', 'balance-mxn', 'balance-usd']);
+let taxanRequest;
+
+function demoRoute(user, hash) {
+    if (user === 'taxan') return taxanView(hash) ? hash : '#taxan/income-mxn';
+    return guestReports.has(hash.split('?', 1)[0]) ? hash : '#';
+}
+
+function setDemoRoute(route, returnTo) {
+    const url = location.pathname + location.search + (route === '#' ? '' : route);
+    history.replaceState({ ...history.state, seed: route, active: route, returnTo }, '', url);
+}
+
+async function showDemoLogin(returnTo) {
+    setDemoRoute('#login', returnTo);
+    taxanRequest?.abort();
+    document.getElementById('shell')?.remove();
+    for (const store of Object.values(xo.stores)) store?.remove?.();
+    xo.session.user_login = undefined;
+    xo.session.status = 'unauthorized';
+    await xo.stores['#login'].render();
+}
+
+async function recoverGuestSession(response) {
+    if (response?.status !== 401 || xo.session.user_login !== 'guest') return false;
+    await showDemoLogin(location.hash);
+    return true;
+}
+
+window.addEventListener('failure', event => {
+    const { response, statusCodes } = event.detail || {};
+    if (response?.status !== 401 || !statusCodes) return;
+    const url = new URL(response.url);
+    if (url.searchParams.get('action') !== 'report' ||
+        url.origin !== new URL(xo.manifest.server.request).origin) return;
+    statusCodes.ignored.push(401);
+    recoverGuestSession(response).catch(error => xo.dom.alert(error.message));
+}, true);
+
+async function openDemoReport(route) {
+    setDemoRoute(route);
+    if (taxanView(route)) await renderTaxanReport();
+    else if (route !== '#') await xo.stores.active.render();
+}
+
 Object.defineProperty(xo.session, 'login', {
-    value: async function (username, password, connection_id) {
+    value: async function (username, password) {
+        xo.session.status = 'authorizing';
+        let user;
         try {
-            xover.session.status = 'authorizing';
-            const endpoint = xover.manifest.server.login.replace(/^POST\s+/i, '');
+            const endpoint = xo.manifest.server.login.replace(/^POST\s+/i, '');
+            const auth = btoa(String.fromCharCode(...new TextEncoder().encode(username + ':' + password)));
             const login = await fetch(endpoint, {
                 method: 'POST',
                 credentials: 'include',
-                headers: { Accept: 'application/json', Authorization: `Basic ${btoa(username + ':' + password)}` },
-                body: new URLSearchParams({ connection_id })
+                headers: { Accept: 'application/json', Authorization: 'Basic ' + auth }
             });
-            const response = login.ok ? await login.json() : null;
-            if (response?.success !== true || !['taxan', 'guest'].includes(response.user_login)) {
+            if (login.status === 401) throw new Error('Usuario o contraseña incorrectos.');
+            if (login.status === 429) throw new Error('Demasiados intentos. Vuelve a intentarlo en unos minutos.');
+            const result = login.ok ? await login.json() : null;
+            if (result?.success !== true || !['taxan', 'guest'].includes(result.user_login)) {
                 throw new Error('El servidor no confirmó el inicio de sesión.');
             }
-            document.querySelector('.login')?.remove();
-            if (response.user_login === 'taxan') {
-                xover.session.user_login = 'taxan';
-                xover.session.status = 'authorized';
-                location.hash = '#taxan/income-mxn';
-                return;
-            }
-
-            xover.session.user_login = response.user_login;
-            xover.session.status = 'authorized';
-            xover.stores.active.render();
-        } catch (e) {
-            xover.session.status = 'unauthorized';
-            throw e;
+            user = result.user_login;
+        } catch (error) {
+            xo.session.status = 'unauthorized';
+            throw error;
         }
+
+        const route = demoRoute(user, history.state?.returnTo || location.hash);
+        document.querySelector('.login')?.remove();
+        xo.session.user_login = user;
+        xo.session.status = 'authorized';
+        setDemoRoute('#');
+        await xo.stores.active.render();
+        await openDemoReport(route);
     }, writable: true, configurable: true
-})
+});
+
+document.addEventListener('submit', async event => {
+    const form = event.target;
+    if (!form.matches('.form-signin')) return;
+    event.preventDefault();
+    const button = form.querySelector('button[type=submit]');
+    if (button.disabled) return;
+    const feedback = form.querySelector('[role=alert]');
+    const password = form.elements.password;
+    button.disabled = true;
+    button.textContent = 'Ingresando…';
+    feedback.textContent = '';
+    try {
+        await xo.session.login(form.elements.username.value, password.value);
+    } catch (error) {
+        const message = error instanceof Error && error.name === 'Error'
+            ? error.message : 'No se pudo conectar con el servidor.';
+        if (form.isConnected) {
+            feedback.textContent = message;
+            password.select();
+        } else {
+            xo.dom.alert(message);
+        }
+    } finally {
+        button.disabled = false;
+        button.textContent = 'Ingresar';
+    }
+});
 
 Object.defineProperty(xo.session, 'logout', {
     value: async function () {
-        try {
-            const response = await fetch(xover.manifest.server.logout.replace(/^POST\s+/i, ''), { method: 'POST', credentials: 'include' });
-            if (!response.ok) throw new Error('No se pudo cerrar la sesión.');
-            taxanRequest?.abort();
-            document.querySelector('.taxan-report')?.remove();
-            for (const store of Object.values(xo.stores)) store?.remove?.();
-            delete xover.session.user_login;
-            xover.session.status = 'unauthorized';
-            location.hash = '#login';
-            await xo.stores['#login'].render();
-        } catch (e) {
-            Promise.reject(e);
-        }
+        const response = await fetch(xo.manifest.server.logout.replace(/^POST\s+/i, ''), {
+            method: 'POST', credentials: 'include'
+        });
+        if (!response.ok) throw new Error('No se pudo cerrar la sesión.');
+        await showDemoLogin();
     }, writable: true, configurable: true
-})
+});
 
 function attachDemoStylesheet(document, tag) {
     if (!document?.documentElement || document.documentElement.localName !== 'model') return;
@@ -1392,12 +1459,9 @@ xo.listener.on('beforeRender::html:dialog', function ({ element }) {
 })
 
 xo.listener.skipSelector(".dropdown-menu.show")
-const taxanViews = new Set(['income-mxn', 'income-usd', 'balance-mxn', 'balance-usd']);
-let taxanRequest;
-
-function taxanView() {
-    const view = location.hash.slice('#taxan/'.length);
-    return location.hash.startsWith('#taxan/') && taxanViews.has(view) ? view : null;
+function taxanView(hash = location.hash) {
+    const view = hash.slice('#taxan/'.length);
+    return hash.startsWith('#taxan/') && taxanViews.has(view) ? view : null;
 }
 
 async function renderTaxanReport() {
@@ -1417,10 +1481,7 @@ async function renderTaxanReport() {
         const response = await fetch(endpoint, { headers: { Accept: 'application/xml' }, credentials: 'include', signal: request.signal });
         if (request.signal.aborted) return;
         if (response.status === 401) {
-            delete xo.session.user_login;
-            xo.session.status = 'unauthorized';
-            location.hash = '#login';
-            await xo.stores['#login'].render();
+            await showDemoLogin('#taxan/' + view);
             return;
         }
         if (!response.ok || !/^application\/xml\b/i.test(response.headers.get('content-type') || '')) {
@@ -1448,10 +1509,24 @@ window.addEventListener('hashchange', () => {
         document.querySelector('.taxan-report')?.remove();
     }
 });
-window.addEventListener('xover-initialized', async () => {
-    if (xo.session.status !== 'authorized') {
-        await xo.stores['#login'].render();
-        return;
+const requested = location.hash === '#login' ? history.state?.returnTo : location.hash;
+
+// XOver may resolve the active store as soon as it seeds history.
+setDemoRoute('#login', requested);
+
+xo.listener.on('beforeRender', ({ dom, event }) => {
+    if (xo.session.status === 'authorized' && dom?.matches?.('.login')) event.preventDefault();
+    if (xo.session.status !== 'authorized' && dom?.querySelector?.('#shell')) event.preventDefault();
+});
+
+let initialReport;
+xo.listener.on('xover-initializing', () => {
+    if (xo.session.status === 'authorized') {
+        initialReport = demoRoute(xo.session.user_login, requested || '');
+        setDemoRoute('#');
     }
-    await renderTaxanReport();
+});
+
+xo.listener.on('xover-initialized', async () => {
+    if (initialReport) await openDemoReport(initialReport);
 });
