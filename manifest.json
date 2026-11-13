@@ -28,6 +28,9 @@
     "#shell": {
       "hash": ""
     },
+    "#server:request||#server:taxan||#dashboardRequest||#polizas||#capital_trabajo||#flujo_efectivo||#razones_financieras||#concentrado_er_balance||#productividad_individual": {
+      "trackers": [{ "label": "Cargando reporte…" }]
+    },
     "#server:login||#server:logout||#server:request": {
       "credentials": "include"
     }

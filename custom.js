@@ -33,20 +33,6 @@ async function progressiveRequest(params) {
     if (store.selectFirst(`/model/fechas`)) {
         params["@get_dims"] = 0;
     }
-    let loading;
-    const requestedLevels = Object.entries(params)
-        .filter(([key, value]) => /^@get_n\d$/.test(key) && Number(value) === 1)
-        .map(([key]) => Number(key.slice(-1)))
-        .sort((a, b) => a - b);
-    if (requestedLevels.length) {
-        loading = await xo.sources["loading.xslt"].render();
-        const progress = loading[0]?.querySelector('i progress');
-        if (progress) {
-            progress.style.display = 'inline';
-            const label = xo.xml.createNode(`<label xmlns="http://www.w3.org/1999/xhtml" style="white-space: nowrap; font-size: xx-small; transform: translateY(-40px); color: white; font-weight: bolder;">Cargando nivel ${requestedLevels.join(', ')}...</label>`);
-            progress.appendAfter(label);
-        }
-    }
     const query = new URLSearchParams(Object.entries(params).filter(([, value]) => value != null));
     const response = xo.server.request.call(this, query, {
         credentials: 'include',
@@ -96,8 +82,6 @@ async function progressiveRequest(params) {
         } else {
             return Promise.resolve(document);
         }
-    }).finally(() => {
-        loading && loading.forEach(el => el.remove());
     });
     //    }
     //});
@@ -109,19 +93,24 @@ async function dashboardRequest(params) {
     for (const [key, value] of Object.entries(params || {})) {
         if (value != null) endpoint.searchParams.set(key, value);
     }
-    const response = await fetch(endpoint, {
-        credentials: 'include',
-        headers: { Accept: 'application/xml' }
-    });
-    if (await recoverGuestSession(response)) return;
-    if (!response.ok) throw response;
+    const request = trackReportRequest(endpoint.href, '#dashboardRequest');
+    try {
+        const response = await fetch(endpoint, {
+            credentials: 'include',
+            headers: { Accept: 'application/xml' }
+        });
+        if (await recoverGuestSession(response)) return;
+        if (!response.ok) throw response;
 
-    // Seed the large XML while detached to avoid queuing all its attributes as mutations.
-    const document = new DOMParser().parseFromString(await response.text(), 'application/xml');
-    if (document.documentElement.localName !== 'model') throw new Error('El servidor devolvió un tablero inesperado.');
-    document.seed();
-    attachDemoStylesheet(document, '#tablero_direccion');
-    return document;
+        // Seed the large XML while detached to avoid queuing all its attributes as mutations.
+        const document = new DOMParser().parseFromString(await response.text(), 'application/xml');
+        if (document.documentElement.localName !== 'model') throw new Error('El servidor devolvió un tablero inesperado.');
+        document.seed();
+        attachDemoStylesheet(document, '#tablero_direccion');
+        return document;
+    } finally {
+        finishReportTrackers(request);
+    }
 }
 
 xo.listener.on('change::fecha/@mth', async function ({ element }) {
@@ -145,10 +134,50 @@ xo.listener.on('change::fecha/@mth', async function ({ element }) {
     }
 })
 
-xo.listener.on('xo.Source:fetch', async function ({ settings = {} }) {
-    let progress = await settings.progress;
-    progress && progress.remove();
-})
+function mountReportTrackers(request, definitions) {
+    if (!Array.isArray(definitions)) return;
+    for (const { label } of definitions) {
+        const tracker = document.createElement('div');
+        tracker.className = 'report-loader';
+        tracker.setAttribute('role', 'status');
+        const caption = document.createElement('span');
+        caption.textContent = label;
+        const progress = document.createElement('progress');
+        progress.max = 100;
+        progress.setAttribute('aria-label', label);
+        tracker.append(caption, progress);
+        request.trackers.add(tracker);
+        document.body.append(tracker);
+    }
+}
+
+function finishReportTrackers(request) {
+    for (const tracker of request.trackers) {
+        if (!tracker.classList?.contains('report-loader')) continue;
+        tracker.remove();
+        request.trackers.delete(tracker);
+    }
+}
+
+window.addEventListener('progress', ({ detail }) => {
+    const request = detail?.request;
+    if (detail?.percent === 0 && request instanceof xo.Request && !request.trackers.size) {
+        mountReportTrackers(request, xo.manifest.getSettings(request, 'trackers'));
+    }
+});
+
+for (const event of ['success', 'failure', 'abort']) {
+    window.addEventListener(event, ({ detail }) => {
+        if (detail?.request instanceof xo.Request) finishReportTrackers(detail.request);
+    });
+}
+
+function trackReportRequest(endpoint, tag) {
+    const request = new xo.Request(new xo.URL(endpoint));
+    request.tags.add(tag);
+    mountReportTrackers(request, xo.manifest.getSettings(request, 'trackers'));
+    return request;
+}
 
 const guestReports = new Set(['#estado_resultados_mensual', '#tablero_direccion']);
 const taxanViews = new Set(['income-mxn', 'income-usd', 'balance-mxn', 'balance-usd']);
@@ -282,34 +311,8 @@ xo.listener.on('fetch::model[not(//processing-instruction())]', function ({ docu
     attachDemoStylesheet(document, tag);
 })
 
-xo.listener.on(['beforeFetch::#polizas', 'beforeFetch::#capital_trabajo', 'beforeFetch::#flujo_efectivo', 'beforeFetch::#razones_financieras', 'beforeFetch::#concentrado_er_balance', 'beforeFetch::#productividad_individual'], function () {
-    this.settings.progress = xo.sources["loading.xslt"].render();
-})
-
 xo.listener.on('hashchange', function () {
     if (typeof toggleSidebar === "function") toggleSidebar(false)
-})
-
-//xo.listener.on('progress', function ({ percent, document, source }) {
-//    if (percent == 100) {
-//        console.log('Download complete.');
-//    } else {
-//        console.log(`Download progress: ${percent}%`);
-
-//    }
-//})
-
-xo.listener.on('progress', async function ({ percent }) {
-    let progress = await this.settings.progress;
-    if (progress) {
-        progress = [progress].flat(Infinity);
-        let target = progress[0].parentNode ?.querySelector('progress');
-        if (target) {
-            target.style.display = 'inline'
-            if (Number.isFinite(percent)) target.value = percent;
-            else target.removeAttribute("value");
-        }
-    }
 })
 
 xo.listener.on('beforeRender', ({ dom }) => {
@@ -1473,11 +1476,13 @@ async function renderTaxanReport() {
     taxanRequest?.abort();
     const request = new AbortController();
     taxanRequest = request;
-    target.textContent = 'Cargando reporte…';
+    target.replaceChildren();
+    const endpoint = new URL(xover.manifest.server.taxan);
+    endpoint.searchParams.set('view', view);
+    const trackerRequest = trackReportRequest(endpoint.href, '#server:taxan');
+    request.signal.addEventListener('abort', () => finishReportTrackers(trackerRequest), { once: true });
 
     try {
-        const endpoint = new URL(xover.manifest.server.taxan);
-        endpoint.searchParams.set('view', view);
         const response = await fetch(endpoint, { headers: { Accept: 'application/xml' }, credentials: 'include', signal: request.signal });
         if (request.signal.aborted) return;
         if (response.status === 401) {
@@ -1499,6 +1504,8 @@ async function renderTaxanReport() {
         if (!target.querySelector('table[data-report]')) throw new Error('No se pudo mostrar el reporte.');
     } catch (error) {
         if (!request.signal.aborted) target.textContent = error.message;
+    } finally {
+        finishReportTrackers(trackerRequest);
     }
 }
 

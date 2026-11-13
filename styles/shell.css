@@ -2879,3 +2879,24 @@ header [class*="__inferior"] .box__mobile {
 }
 
 /*---------------------------------------*/
+
+.report-loader {
+    position: fixed;
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1091;
+    display: grid;
+    gap: .4rem;
+    width: min(16rem, calc(100% - 2rem));
+    padding: .75rem 1rem;
+    color: #18334d;
+    background: #fff;
+    border: 1px solid #aab7c6;
+    border-radius: .5rem;
+    box-shadow: 0 .25rem 1rem rgb(0 0 0 / 15%);
+    text-align: center;
+    pointer-events: none;
+}
+
+.report-loader progress { width: 100%; }
