@@ -1,0 +1,4 @@
+[submodule "xover"]
+	path = xover
+	url = https://github.com/panaxit/xover.git
+	branch = v20260707

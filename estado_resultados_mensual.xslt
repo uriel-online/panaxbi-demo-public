@@ -1,4 +1,4 @@
-﻿<xsl:stylesheet version="1.0"
+<xsl:stylesheet version="1.0"
 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 xmlns="http://www.w3.org/1999/xhtml"
 xmlns:js="http://panax.io/xover/javascript"
@@ -200,8 +200,8 @@ exclude-result-prefixes="#default session sitemap shell"
 						scales: { y: { beginAtZero: true } }
 					}
 				};
-				const ctx = document.getElementById('myChart').getContext('2d');
-				const myChart = new Chart(ctx, config);
+				const canvas = document.getElementById('myChart');
+				if (canvas && typeof Chart === 'function') new Chart(canvas.getContext('2d'), config);
 ]]>
               </script>
             </div>

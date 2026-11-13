@@ -1,4 +1,4 @@
-﻿<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml"
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml"
 xmlns:x="http://panax.io/xover"
 xmlns:session="http://panax.io/session"
 xmlns:sitemap="http://panax.io/sitemap"
@@ -106,17 +106,17 @@ exclude-result-prefixes="#default x session sitemap shell state source"
           </div>
         </div>
       </nav>
-      <span class="page-menu" xo-store="active" xo-stylesheet="page_navbar.xslt"/>
+      <span class="page-menu" xo-store="active" xo-stylesheet="../page_navbar.xslt"/>
       <main>
       </main>
       <footer class="d-flex flex-wrap justify-content-between align-items-center py-1 px-3">
-        <div id="page_controls" xo-store="active" xo-stylesheet="page_controls.xslt" class="col-md-12 d-flex align-items-center">
+        <div id="page_controls" xo-store="active" xo-stylesheet="../page_controls.xslt" class="col-md-12 d-flex align-items-center">
         </div>
-        <div id="offcanvas" xo-store="active" xo-stylesheet="page_controls.offcanvas.xslt" class="col-md-12 d-flex align-items-center">
+        <div id="offcanvas" xo-store="active" xo-stylesheet="../page_controls.offcanvas.xslt" class="col-md-12 d-flex align-items-center">
         </div>
       </footer>
       <aside class="sidebar" xo-store="#sitemap" xo-stylesheet="sitemap.xslt" id="sitemap"/>
-      <div class="settings" xo-store="#settings" xo-stylesheet="settings.xslt"/>
+      <div class="settings" xo-store="#settings" xo-stylesheet="../settings.xslt"/>
     </div>
   </xsl:template>
 
@@ -130,7 +130,7 @@ exclude-result-prefixes="#default x session sitemap shell state source"
 
   <xsl:template mode="nav.title" match="*">
     <header class="hpadding0">
-      <h1 xo-store="active" xo-stylesheet="title.xslt"></h1>
+      <h1 xo-store="active" xo-stylesheet="../title.xslt"></h1>
     </header>
   </xsl:template>
 

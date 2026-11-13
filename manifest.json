@@ -1,0 +1,34 @@
+{
+  "server": {
+    "request": "https://server.panaxbi.com/gateway.asp?action=report",
+    "login": "POST https://server.panaxbi.com/gateway.asp?action=login",
+    "logout": "POST https://server.panaxbi.com/gateway.asp?action=logout",
+    "taxan": "https://server.panaxbi.com/gateway.asp?action=soaddi-data"
+  },
+  "sources": {
+    "#": "#shell",
+    "#sitemap": "navigation.xml",
+    "#tablero_direccion": {
+      "server:request": {
+        "command": "[#panax].[getBalancedScorecard]"
+      }
+    },
+    "#estado_resultados_mensual": {
+      "progressiveRequest": {
+        "command": "#panax.getData",
+        "@get_un": 1,
+        "@get_n1": 1,
+        "@get_budget": 0
+      }
+    },
+    "^#taxan/.*": "taxan-route.xml"
+  },
+  "settings": {
+    "#shell": {
+      "hash": ""
+    },
+    "#server:login||#server:logout||#server:request": {
+      "credentials": "include"
+    }
+  }
+}

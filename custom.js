@@ -33,21 +33,26 @@ async function progressiveRequest(params) {
     if (store.selectFirst(`/model/fechas`)) {
         params["@get_dims"] = 0;
     }
-    let response = {};
-    let source = this;
-    let loading, progress;
-    if (Object.keys(params).filter(key => key.match(/@get_n\d/)).length) {
-        this.settings.progress = await xo.sources["loading.xslt"].render();
-        progress = this.settings.progress[0].querySelector('i progress');
-        progress.style.display = 'inline';
+    let loading;
+    const requestedLevels = Object.entries(params)
+        .filter(([key, value]) => /^@get_n\d$/.test(key) && Number(value) === 1)
+        .map(([key]) => Number(key.slice(-1)))
+        .sort((a, b) => a - b);
+    if (requestedLevels.length) {
+        loading = await xo.sources["loading.xslt"].render();
+        const progress = loading[0]?.querySelector('i progress');
+        if (progress) {
+            progress.style.display = 'inline';
+            const label = xo.xml.createNode(`<label xmlns="http://www.w3.org/1999/xhtml" style="white-space: nowrap; font-size: xx-small; transform: translateY(-40px); color: white; font-weight: bolder;">Cargando nivel ${requestedLevels.join(', ')}...</label>`);
+            progress.appendAfter(label);
+        }
     }
-    let requested_levels = Object.entries(params).filter(([key, value]) => key.match(/@get_n\d/) && value == 1).map(([key]) => key.replace(/@get_n(\d+)/, '$1')).order();
-    //Object.keys(params).filter(key => key.match(/@get_n\d/)).forEach((key, ix) => {
-    //    if (ix == 0) {
-    let new_params = params;//Object.fromEntries(Object.entries(params).filter(([key]) => !key.match(/@get_n\d/)));
-    //new_params[key] = params[key];
-    progress.appendAfter(xo.xml.createNode(`<label xmlns="http://www.w3.org/1999/xhtml" style="white-space: nowrap; font-size: xx-small; transform: translateY(-40px); color: white; font-weight: bolder;">Cargando nivel ${requested_levels.join(', ')}...</label>`));
-    response = xo.server.request.call(this, new_params, { source: source, progress: progress }).then(document => {
+    const query = new URLSearchParams(Object.entries(params).filter(([, value]) => value != null));
+    const response = xo.server.request.call(this, query, {
+        credentials: 'include',
+        headers: { Accept: 'application/xml' }
+    }).then(document => {
+        attachDemoStylesheet(document, '#estado_resultados_mensual');
         //delete params[key];
         let items = document.select(`/model/polizas|/model/presupuesto`).filter(item => item.firstElementChild);
         document.seed();
@@ -59,8 +64,9 @@ async function progressiveRequest(params) {
         }
 
         let target_model = store.selectFirst(`/model`);
-        if (target_model) {
-            store.observer.disconnect();
+        if (target_model && items.length) {
+            const observer = store.document.observer;
+            observer?.disconnect();
             for (item of items) {
                 let dims = item.select(`@div|@rs|@un`);
                 let levels = [...new Set(item.select(`*/@n1|*/@n2|*/@n3|*/@n4|*/@n5|*/@n6`).map(n => n.value))];
@@ -74,12 +80,12 @@ async function progressiveRequest(params) {
                         target.append(...item.select('*'));
                     }
                 }
-                //xo.stores.seed.select(`/model/polizas/*/@n${key.substring(6)}`).forEach(el => original_remove.apply(el.parentNode));
-                //xo.stores.seed.select(`/model/presupuesto/*/@n${key.substring(6)}`).forEach(el => original_remove.apply(el.parentNode));
+                //xo.stores.seed.select(`/model/polizas/*/@n${key.substring(6)}`).forEach(el => el.parentNode?.remove({ silent: true }));
+                //xo.stores.seed.select(`/model/presupuesto/*/@n${key.substring(6)}`).forEach(el => el.parentNode?.remove({ silent: true }));
                 //xo.stores.seed.select('//model').forEach(polizas => polizas.append(...document.select('//model/polizas'), { silent: true }));
                 //xo.stores.seed.select('/model').forEach(polizas => polizas.append(...document.select('/model/presupuesto'), { silent: true }));
             }
-            xo.stores.seed.observer.connect();
+            observer?.connect();
         }
 
         //progressiveRequest.call(this, params);
@@ -127,26 +133,25 @@ Object.defineProperty(xo.session, 'login', {
     value: async function (username, password, connection_id) {
         try {
             xover.session.status = 'authorizing';
-            const response = await xover.server.login(
-                new URLSearchParams({ 'connection_id': connection_id }),
-                { headers: { accept: 'application/json', authorization: `Basic ${btoa(username + ':' + password)}` } }
-            );
-            if (response?.success !== true) {
+            const endpoint = xover.manifest.server.login.replace(/^POST\s+/i, '');
+            const login = await fetch(endpoint, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { Accept: 'application/json', Authorization: `Basic ${btoa(username + ':' + password)}` },
+                body: new URLSearchParams({ connection_id })
+            });
+            const response = login.ok ? await login.json() : null;
+            if (response?.success !== true || !['taxan', 'guest'].includes(response.user_login)) {
                 throw new Error('El servidor no confirmó el inicio de sesión.');
             }
+            document.querySelector('.login')?.remove();
             if (response.user_login === 'taxan') {
-                const report = 'https://server.panaxbi.com/gateway.asp?action=soaddi-web&view=income-mxn';
-                if (response.redirect !== report) {
-                    throw new Error('El destino del módulo Taxan no es válido.');
-                }
-                xover.session.setKey('user_login', undefined);
-                xover.session.setKey('status', 'unauthorized');
-                location.replace(report);
+                xover.session.user_login = 'taxan';
+                xover.session.status = 'authorized';
+                location.hash = '#taxan/income-mxn';
                 return;
             }
-            if (response.user_login !== 'guest') {
-                throw new Error('El usuario devuelto por el servidor no es válido.');
-            }
+
             xover.session.user_login = response.user_login;
             xover.session.status = 'authorized';
             xover.stores.active.render();
@@ -160,21 +165,33 @@ Object.defineProperty(xo.session, 'login', {
 Object.defineProperty(xo.session, 'logout', {
     value: async function () {
         try {
-            let response = await xover.server.logout();
-            for (store in xo.stores) {
-                xo.stores[store].remove()
-            }
+            const response = await fetch(xover.manifest.server.logout.replace(/^POST\s+/i, ''), { method: 'POST', credentials: 'include' });
+            if (!response.ok) throw new Error('No se pudo cerrar la sesión.');
+            taxanRequest?.abort();
+            document.querySelector('.taxan-report')?.remove();
+            for (const store of Object.values(xo.stores)) store?.remove?.();
+            delete xover.session.user_login;
             xover.session.status = 'unauthorized';
-            history.go(-xo.site.position + 1);
+            location.hash = '#login';
+            await xo.stores['#login'].render();
         } catch (e) {
             Promise.reject(e);
         }
     }, writable: true, configurable: true
 })
 
-xo.listener.on('fetch::model[not(//processing-instruction())]', function ({ document, store }) {
-    let tag = store.tag;
-    document.addStylesheet({ href: tag.substring(1).split(/\?/, 1).shift() + '.xslt', target: "@#shell main" });
+function attachDemoStylesheet(document, tag) {
+    if (!document?.documentElement || document.documentElement.localName !== 'model') return;
+    const route = tag?.split('?', 1)[0];
+    if (route !== '#tablero_direccion' && route !== '#estado_resultados_mensual') return;
+    const href = new URL(route.slice(1) + '.xslt', location.href).href;
+    if (document.stylesheets?.some(sheet => sheet.href === href)) return;
+    document.addStylesheet({ href, target: "@#shell main" });
+}
+
+xo.listener.on('fetch::model[not(//processing-instruction())]', function ({ document, store, request }) {
+    const tag = store?.tag || request?.source?.tag || xover.site.seed;
+    attachDemoStylesheet(document, tag);
 })
 
 xo.listener.on(['beforeFetch::#polizas', 'beforeFetch::#capital_trabajo', 'beforeFetch::#flujo_efectivo', 'beforeFetch::#razones_financieras', 'beforeFetch::#concentrado_er_balance', 'beforeFetch::#productividad_individual'], function () {
@@ -208,11 +225,11 @@ xo.listener.on('progress', async function ({ percent }) {
 })
 
 xo.listener.on('beforeRender', ({ dom }) => {
-    dom.querySelectorAll(".cell[fecha]").forEach(cell => { cell.setAttributes(cell.select("ancestor-or-self::*/@div[1]|ancestor-or-self::*/@rs[1]|ancestor-or-self::*/@un[1]|ancestor-or-self::*/@cta[1]|ancestor-or-self::*/@cl[1]|ancestor-or-self::*/@fecha[1]").reduce((obj, attr) => { obj[attr.name] = attr.value || ''; return obj }, {})) });
+    dom?.querySelectorAll(".cell[fecha]").forEach(cell => { cell.setAttributes(cell.select("ancestor-or-self::*/@div[1]|ancestor-or-self::*/@rs[1]|ancestor-or-self::*/@un[1]|ancestor-or-self::*/@cta[1]|ancestor-or-self::*/@cl[1]|ancestor-or-self::*/@fecha[1]").reduce((obj, attr) => { obj[attr.name] = attr.value || ''; return obj }, {})) });
 })
 
 xo.listener.on(['beforeRender::#flujo_efectivo.xslt'], ({ dom }) => {
-    dom.querySelectorAll(".cell").forEach(cell => { cell.setAttributes(cell.select("ancestor-or-self::*/@div[1]|ancestor-or-self::*/@rs[1]|ancestor-or-self::*/@un[1]|ancestor-or-self::*/@cta[1]|ancestor-or-self::*/@cl[1]|ancestor-or-self::*/@fecha[1]").reduce((obj, attr) => { obj[attr.name] = attr.value || ''; return obj }, {})) });
+    dom?.querySelectorAll(".cell").forEach(cell => { cell.setAttributes(cell.select("ancestor-or-self::*/@div[1]|ancestor-or-self::*/@rs[1]|ancestor-or-self::*/@un[1]|ancestor-or-self::*/@cta[1]|ancestor-or-self::*/@cl[1]|ancestor-or-self::*/@fecha[1]").reduce((obj, attr) => { obj[attr.name] = attr.value || ''; return obj }, {})) });
 })
 
 xo.listener.on(['render::#estado_resultados_mensual.xslt', 'render::#razones_financieras.xslt', 'render::#capital_trabajo.xslt', 'change::state:validate', 'render::#flujo_efectivo.xslt'], ({ dom }) => {
@@ -233,7 +250,7 @@ xo.listener.on(['beforeRender::#shell.xslt', 'beforeAppendTo::main', 'beforeAppe
 })
 
 xo.listener.on('beforeRender', ({ target, stylesheet }) => {
-    if (/*[""].includes((stylesheet || {}).href) && */target.querySelector('.offcanvas.show')) {
+    if (/*[""].includes((stylesheet || {}).href) && */target?.querySelector('.offcanvas.show')) {
         //event.preventDefault()
     }
 })
@@ -410,7 +427,7 @@ xo.listener.on('beforeTransform::model[not(@env:stylesheet="title.xslt" or @env:
         this.select(`model/fechas`).forEach(node => node.setAttribute("state:current_date_er", selected_date))
     }
 
-    this.select(`/model/*/*/@monto`).filter(monto => !(+monto && isFinite(monto.value))).forEach(el => original_remove.apply(el.parentNode))
+    this.select(`/model/*/*/@monto`).filter(monto => !(+monto && isFinite(monto.value))).forEach(el => el.parentNode?.remove({ silent: true }))
 
     let active_accounts = [];
     //if (this.selectFirst("/model[contains(@env:store, '_alt')]") || store.tag == '#estado_resultados_mensual' || store.tag == '#estado_resultados') {
@@ -421,40 +438,40 @@ xo.listener.on('beforeTransform::model[not(@env:stylesheet="title.xslt" or @env:
 
     if (['estado_resultados_unidad.xslt', 'estado_resultados_tracto.xslt'].includes(stylesheet.href)) {
         let mantenibles = env.select(`//mantenibles//*[.//@state:active]/@num`).map(num => num.value);
-        mantenibles.length && this.select(`//model/*/*/@tr|//model/*/*/@m`).filter(el => !mantenibles.includes(el.value)).forEach(el => original_remove.apply(el.parentNode));
+        mantenibles.length && this.select(`//model/*/*/@tr|//model/*/*/@m`).filter(el => !mantenibles.includes(el.value)).forEach(el => el.parentNode?.remove({ silent: true }));
     }
     if (stylesheet.href == 'estado_resultados_tracto.xslt' || xo.site.active == '#estado_resultados_tracto' && stylesheet.href == 'page_controls.xslt') {
-        this.select(`//model/polizas/poliza[@fecha!="${selected_date}"]`).forEach(el => original_remove.apply(el));
+        this.select(`//model/polizas/poliza[@fecha!="${selected_date}"]`).forEach(el => el.remove({ silent: true }));
     }
 
     if (!["page_controls.xslt", "page_navbar.xslt", "page_controls.mantenibles.xslt", "shell_buttons.xslt"].includes(stylesheet.href)) {
         let unidades_seleccionadas = [...new Set(this.select("//unidades_negocio/unidad_negocio[@state:checked]/@id").map(el => el.value))];
-        unidades_seleccionadas.length && this.select(`//model/*/*/@un|//model/*/@un`).filter(el => !unidades_seleccionadas.includes(el.value)).forEach(el => original_remove.apply(el.parentNode));
+        unidades_seleccionadas.length && this.select(`//model/*/*/@un|//model/*/@un`).filter(el => !unidades_seleccionadas.includes(el.value)).forEach(el => el.parentNode?.remove({ silent: true }));
     }
 
     //if (stylesheet.href == 'razones_financieras.xslt') {
     //    let divisiones = this.select("//razones_sociales/razon_social[@state:checked]/@div|//divisiones/division[@state:checked]/@id");
-    //    divisiones.length && this.select(`//indicadores/indicador[not(${divisiones.map(attr => `@div="${attr.value}"`).join(" or ")})]`).forEach(el => original_remove.apply(el));
+    //    divisiones.length && this.select(`//indicadores/indicador[not(${divisiones.map(attr => `@div="${attr.value}"`).join(" or ")})]`).forEach(el => el.remove({ silent: true }));
     //    let razones_sociales = this.select("//razones_sociales/razon_social[@state:checked]/@id");
-    //    razones_sociales.length && this.select(`//indicadores/indicador[not(${razones_sociales.map(attr => `@rs="${attr.value}"`).join(" or ")})]`).forEach(el => original_remove.apply(el));
+    //    razones_sociales.length && this.select(`//indicadores/indicador[not(${razones_sociales.map(attr => `@rs="${attr.value}"`).join(" or ")})]`).forEach(el => el.remove({ silent: true }));
     //    //let unidades_seleccionadas = this.select("//unidades_negocio/unidad_negocio[@state:checked]");
-    //    //unidades_seleccionadas.length && this.select(`//model/polizas/poliza[not(${unidades_seleccionadas.map(el => `@un="${el.getAttribute("id")}"`).join(" or ")})]`).forEach(el => original_remove.apply(el));
+    //    //unidades_seleccionadas.length && this.select(`//model/polizas/poliza[not(${unidades_seleccionadas.map(el => `@un="${el.getAttribute("id")}"`).join(" or ")})]`).forEach(el => el.remove({ silent: true }));
     //}
     if (stylesheet.href == 'estado_resultados.xslt') {
-        this.select(`/model/*/*[@fecha][not(starts-with(@fecha,"${`${this.selectFirst("//@state:current_date_er") || new Date().getFullYear()}`.substr(0, 4)}") or starts-with(@fecha,"${`${this.selectFirst("//@state:current_date_er") || new Date().getFullYear()}`.substr(0, 4) - 1}"))]`).forEach(el => original_remove.apply(el));
+        this.select(`/model/*/*[@fecha][not(starts-with(@fecha,"${`${this.selectFirst("//@state:current_date_er") || new Date().getFullYear()}`.substr(0, 4)}") or starts-with(@fecha,"${`${this.selectFirst("//@state:current_date_er") || new Date().getFullYear()}`.substr(0, 4) - 1}"))]`).forEach(el => el.remove({ silent: true }));
     }
     ////if (stylesheet.href == 'estado_resultados_mensual.xslt') {
     ////    let selected_years = [new Date().getFullYear()];
-    ////    this.select(`//model/polizas/poliza[not(starts-with(@fecha,"${`${this.selectFirst("//@state:current_date_er") || new Date().getFullYear()}`.substr(0, 4)}") or starts-with(@fecha,"${`${this.selectFirst("//@state:current_date_er") || new Date().getFullYear()}`.substr(0, 4) - 1}"))]`).forEach(el => original_remove.apply(el));
+    ////    this.select(`//model/polizas/poliza[not(starts-with(@fecha,"${`${this.selectFirst("//@state:current_date_er") || new Date().getFullYear()}`.substr(0, 4)}") or starts-with(@fecha,"${`${this.selectFirst("//@state:current_date_er") || new Date().getFullYear()}`.substr(0, 4) - 1}"))]`).forEach(el => el.remove({ silent: true }));
     ////}
     //if (stylesheet.href == 'estado_resultados_unidad.xslt' || stylesheet.href == 'estado_resultados.xslt' || stylesheet.href == 'estado_resultados_mensual.xslt' || stylesheet.href == 'page_controls.xslt' || stylesheet.href == 'page_navbar.xslt') {
     let divisiones = this.select("//razones_sociales/razon_social[@state:checked]/@div|//divisiones/division[@state:checked]/@id").map(el => el.value).distinct();
-    //divisiones.length && this.select(`//model/polizas/poliza[not(${divisiones.map(attr => `@div="${attr.value}"`).join(" or ")})]`).forEach(el => original_remove.apply(el));
-    divisiones.length && this.select(`//model/*[not(self::razones_sociales)]/*/@div|//model/*/@div`).filter(el => !divisiones.includes(el.value)).forEach(el => original_remove.apply(el.parentNode));
+    //divisiones.length && this.select(`//model/polizas/poliza[not(${divisiones.map(attr => `@div="${attr.value}"`).join(" or ")})]`).forEach(el => el.remove({ silent: true }));
+    divisiones.length && this.select(`//model/*[not(self::razones_sociales)]/*/@div|//model/*/@div`).filter(el => !divisiones.includes(el.value)).forEach(el => el.parentNode?.remove({ silent: true }));
 
     let razones_sociales = this.select("//razones_sociales/razon_social[@state:checked]/@id").map(el => el.value).distinct();
-    //razones_sociales.length && this.select(`//model/polizas/poliza[not(${razones_sociales.map(attr => `@rs="${attr.value}"`).join(" or ")})]`).forEach(el => original_remove.apply(el));
-    razones_sociales.length && this.select(`//model/*/@rs|//model/*/*/@rs`).filter(el => !razones_sociales.includes(el.value)).forEach(el => original_remove.apply(el.parentNode));
+    //razones_sociales.length && this.select(`//model/polizas/poliza[not(${razones_sociales.map(attr => `@rs="${attr.value}"`).join(" or ")})]`).forEach(el => el.remove({ silent: true }));
+    razones_sociales.length && this.select(`//model/*/@rs|//model/*/*/@rs`).filter(el => !razones_sociales.includes(el.value)).forEach(el => el.parentNode?.remove({ silent: true }));
 
     if (!razones_sociales.length && ["razones_financieras.xslt"].includes(stylesheet.href)) {
         this.select(`//indicadores/indicador`).remove();
@@ -465,9 +482,9 @@ xo.listener.on('beforeTransform::model[not(@env:stylesheet="title.xslt" or @env:
         let missing_un = active_un.filter(un => !this.select('//unidades_negocio/unidad_negocio/@id').map(el => el.value).includes(un));
         missing_un.filter(un => store.selectFirst(`//unidades_negocio[not(*[@id="${un}"])]`)).forEach(un => store.selectFirst(`//unidades_negocio`).append(xo.xml.createNode(`<unidad_negocio id="${un}" cve="" nom="${un == -1 && "N/D" || ""}" xmlns:xo="http://panax.io/xover"/>`)));
     }
-    this.select("//unidades_negocio/unidad_negocio/@id").filter(el => !active_un.includes(el.value)).forEach(el => original_remove.apply(el.parentNode));
+    this.select("//unidades_negocio/unidad_negocio/@id").filter(el => !active_un.includes(el.value)).forEach(el => el.parentNode?.remove({ silent: true }));
     if (stylesheet.href == 'page_controls.xslt') {
-        this.select(`/model[not(divisiones/division[@state:checked="true"])]/unidades_negocio/unidad_negocio/@id`).forEach(el => original_remove.apply(el.parentNode));
+        this.select(`/model[not(divisiones/division[@state:checked="true"])]/unidades_negocio/unidad_negocio/@id`).forEach(el => el.parentNode?.remove({ silent: true }));
     }
 
     let active_years = [selected_date.substring(0, 4)].concat(this.select('//fechas/fecha[@state:checked="true"]/@mes').map(el => el.value.substring(0, 4))).distinct();
@@ -475,12 +492,12 @@ xo.listener.on('beforeTransform::model[not(@env:stylesheet="title.xslt" or @env:
     if (["estado_resultados.xslt"].includes(stylesheet.href)) {
         let er_valid_dates = [selected_date].map(fecha => [`${fecha.substr(0, 4)}${fecha.substr(4, 2)}`, `${fecha.substr(0, 4) - 1}${fecha.substr(4, 2)}`, `${fecha.substr(0, 4)}~${fecha.substr(4, 2)}`, `${fecha.substr(0, 4) - 1}~${fecha.substr(4, 2)}`, `${fecha.substr(0, 4) - 1}~12`, `${fecha.substr(0, 4)}~12`]).pop();
         let er_valid_budget_dates = er_valid_dates.concat(this.select(`/model/fechas/fecha[@mes='${selected_date}']/following-sibling::fecha`).slice(0, 3).map(fecha => fecha.getAttribute("mes")));
-        this.select(`/model/polizas/poliza/@fecha`).filter(fecha => !er_valid_dates.includes(fecha.value)).forEach(el => original_remove.apply(el.parentNode));
-        this.select(`/model/presupuesto/presupuesto/@fecha`).filter(fecha => !er_valid_budget_dates.includes(fecha.value)).forEach(el => original_remove.apply(el.parentNode));
+        this.select(`/model/polizas/poliza/@fecha`).filter(fecha => !er_valid_dates.includes(fecha.value)).forEach(el => el.parentNode?.remove({ silent: true }));
+        this.select(`/model/presupuesto/presupuesto/@fecha`).filter(fecha => !er_valid_budget_dates.includes(fecha.value)).forEach(el => el.parentNode?.remove({ silent: true }));
     } else if (["concentrado_er_balance.xslt"].includes(stylesheet.href)) {
-        active_years.length && this.select(`/model/*/*/@fecha[not(contains(.,'~'))]`).filter(el => !active_years.includes(el.value.substring(0, 4))).forEach(el => original_remove.apply(el.parentNode))
+        active_years.length && this.select(`/model/*/*/@fecha[not(contains(.,'~'))]`).filter(el => !active_years.includes(el.value.substring(0, 4))).forEach(el => el.parentNode?.remove({ silent: true }))
     } else if (!["page_controls", "page_navbar", "inventario_mermas"].includes(stylesheet.href.split('.')[0])) {
-        active_years.length && this.select(`/model/*/*/@fecha[not(contains(.,'~12') or starts-with(.,'~')${['capital_trabajo.xslt'].includes(stylesheet.href) ? ` or .='${selected_date.substring(0, 4) - 1}12'` : ''})]`).filter(el => !active_years.includes(el.value.substring(0, 4))).forEach(el => original_remove.apply(el.parentNode))
+        active_years.length && this.select(`/model/*/*/@fecha[not(contains(.,'~12') or starts-with(.,'~')${['capital_trabajo.xslt'].includes(stylesheet.href) ? ` or .='${selected_date.substring(0, 4) - 1}12'` : ''})]`).filter(el => !active_years.includes(el.value.substring(0, 4))).forEach(el => el.parentNode?.remove({ silent: true }))
     }
 
     let active_fecha = this.select('/model/*/*/@fecha').map(String).distinct();
@@ -489,24 +506,24 @@ xo.listener.on('beforeTransform::model[not(@env:stylesheet="title.xslt" or @env:
     }
     if (["estado_resultados_unidad.xslt"].includes(stylesheet.href)) {
         this.select("/model[@env:store='#estado_resultados_unidad']/fechas/fecha[substring(@mes,5,7)='12']/@mes").forEach(fecha => fecha.parentNode.duplicate().set("mes", fecha.value.substring(0, 4)).set("nom", fecha.value.substring(0, 4)).seed(true).removeAttribute("limit"))
-        this.select(`model/fechas[count(fecha/@limit)>1]/fecha[not(@limit or string-length(@mes)=4) and not(preceding-sibling::fecha/@limit and following-sibling::fecha/@limit)]`).forEach(el => original_remove.apply(el));
-        active_years.length && this.select(`model/fechas/fecha/@mes`).filter(mes => !active_years.includes(mes.value.substring(0,4))).forEach(el => original_remove.apply(el.parentNode));
+        this.select(`model/fechas[count(fecha/@limit)>1]/fecha[not(@limit or string-length(@mes)=4) and not(preceding-sibling::fecha/@limit and following-sibling::fecha/@limit)]`).forEach(el => el.remove({ silent: true }));
+        active_years.length && this.select(`model/fechas/fecha/@mes`).filter(mes => !active_years.includes(mes.value.substring(0,4))).forEach(el => el.parentNode?.remove({ silent: true }));
 
         active_fecha = this.select('/model/fechas/fecha/@mes').map(String);
-        active_fecha.length && this.select(`/model/*/*/@fecha`).filter(el => !active_fecha.includes(el.value)).forEach(el => original_remove.apply(el.parentNode))
+        active_fecha.length && this.select(`/model/*/*/@fecha`).filter(el => !active_fecha.includes(el.value)).forEach(el => el.parentNode?.remove({ silent: true }))
     }
 
-    this.select("/model[@env:store='#estado_resultados' or @env:store='#estado_resultados_tracto' or not(@env:stylesheet='page_navbar.xslt')]/fechas/fecha/@mes").filter(el => !(active_fecha.includes(el.value) || /*["#flujo_efectivo", "#capital_trabajo"].includes(store.tag) && */active_years.includes(el.value.substring(0, 4)))).forEach(el => original_remove.apply(el.parentNode));
+    this.select("/model[@env:store='#estado_resultados' or @env:store='#estado_resultados_tracto' or not(@env:stylesheet='page_navbar.xslt')]/fechas/fecha/@mes").filter(el => !(active_fecha.includes(el.value) || /*["#flujo_efectivo", "#capital_trabajo"].includes(store.tag) && */active_years.includes(el.value.substring(0, 4)))).forEach(el => el.parentNode?.remove({ silent: true }));
     //}
     if (stylesheet.href != 'page_controls.xslt') {
-        divisiones.length && this.select("//razones_sociales/razon_social/@div|//divisiones/division/@id").filter(el => !divisiones.includes(el.value)).forEach(el => original_remove.apply(el.parentNode));
-        razones_sociales.length && this.select("//razones_sociales/razon_social/@rs").filter(el => !razones_sociales.includes(el.value)).forEach(el => original_remove.apply(el.parentNode));
+        divisiones.length && this.select("//razones_sociales/razon_social/@div|//divisiones/division/@id").filter(el => !divisiones.includes(el.value)).forEach(el => el.parentNode?.remove({ silent: true }));
+        razones_sociales.length && this.select("//razones_sociales/razon_social/@rs").filter(el => !razones_sociales.includes(el.value)).forEach(el => el.parentNode?.remove({ silent: true }));
 
         let productos_activos = this.select("//@prod").map(attr => attr.value).distinct();
-        this.select("//productos/producto/@id").filter(el => !productos_activos.includes(el.value)).forEach(el => original_remove.apply(el.parentNode));
+        this.select("//productos/producto/@id").filter(el => !productos_activos.includes(el.value)).forEach(el => el.parentNode?.remove({ silent: true }));
     }
     if (stylesheet.href == 'page_navbar.xslt') {
-        this.select('/model/polizas|/model/presupuesto|/model/compras|/model/ventas').forEach(el => original_remove.apply(el));
+        this.select('/model/polizas|/model/presupuesto|/model/compras|/model/ventas').forEach(el => el.remove({ silent: true }));
     }
     if (["estado_resultados_mensual.xslt", "estado_resultados.xslt"].includes(stylesheet.href)) {
         for (let [obj, expanded] of [...xo.site.state.expanded || []]) {
@@ -538,7 +555,7 @@ xo.listener.on('beforeTransform::model[not(@env:stylesheet="title.xslt" or @env:
 
     //if (['estado_resultados_tracto.xslt'].includes(stylesheet.href)) {
     let mantenibles = this.select(`//model/*/*/@tr|//model/*/*/@m`).map(tr => tr.value);
-    this.select(`//mantenibles//*[@num]`).filter(el => !mantenibles.length || !el.select('descendant-or-self::*/@num').some(tr => mantenibles.includes(tr.value))).forEach(el => original_remove.apply(el));
+    this.select(`//mantenibles//*[@num]`).filter(el => !mantenibles.length || !el.select('descendant-or-self::*/@num').some(tr => mantenibles.includes(tr.value))).forEach(el => el.remove({ silent: true }));
     //}
     let active_tr = [...new Set(this.select('//model[mantenibles]/*/*/@tr').map(el => el.value))];
     if (active_tr.length) {
@@ -1351,3 +1368,66 @@ xo.listener.on('beforeRender::html:dialog', function ({ element }) {
 })
 
 xo.listener.skipSelector(".dropdown-menu.show")
+const taxanViews = new Set(['income-mxn', 'income-usd', 'balance-mxn', 'balance-usd']);
+let taxanRequest;
+
+function taxanView() {
+    const view = location.hash.slice('#taxan/'.length);
+    return location.hash.startsWith('#taxan/') && taxanViews.has(view) ? view : null;
+}
+
+async function renderTaxanReport() {
+    const view = taxanView();
+    if (xo.session.user_login !== 'taxan' || !view) return;
+    const target = document.querySelector('main');
+    if (!target) return;
+
+    taxanRequest?.abort();
+    const request = new AbortController();
+    taxanRequest = request;
+    target.textContent = 'Cargando reporte…';
+
+    try {
+        const endpoint = new URL(xover.manifest.server.taxan);
+        endpoint.searchParams.set('view', view);
+        const response = await fetch(endpoint, { headers: { Accept: 'application/xml' }, credentials: 'include', signal: request.signal });
+        if (request.signal.aborted) return;
+        if (response.status === 401) {
+            delete xo.session.user_login;
+            xo.session.status = 'unauthorized';
+            location.hash = '#login';
+            await xo.stores['#login'].render();
+            return;
+        }
+        if (!response.ok || !/^application\/xml\b/i.test(response.headers.get('content-type') || '')) {
+            throw new Error('No se pudo obtener el reporte.');
+        }
+
+        const data = xover.xml.createDocument(await response.text());
+        if (data.documentElement?.localName !== 'report' || data.documentElement.getAttribute('id') !== view) {
+            throw new Error('El servidor devolvió un reporte inesperado.');
+        }
+        if (request.signal.aborted) return;
+        const store = new xover.Store(data);
+        target.replaceChildren();
+        await store.render({ target, href: 'taxan.xslt' });
+        if (!target.querySelector('table[data-report]')) throw new Error('No se pudo mostrar el reporte.');
+    } catch (error) {
+        if (!request.signal.aborted) target.textContent = error.message;
+    }
+}
+
+window.addEventListener('hashchange', () => {
+    if (taxanView()) renderTaxanReport();
+    else {
+        taxanRequest?.abort();
+        document.querySelector('.taxan-report')?.remove();
+    }
+});
+window.addEventListener('xover-initialized', async () => {
+    if (xo.session.status !== 'authorized') {
+        await xo.stores['#login'].render();
+        return;
+    }
+    await renderTaxanReport();
+});
