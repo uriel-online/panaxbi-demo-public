@@ -9,7 +9,7 @@
 
   <xsl:template match="sitemap" priority="2" mode="sitemap:widget">
     <li class="sitemap-toolbar">
-      <button type="button" data-sitemap-close="" aria-label="Cerrar menú" onclick="togglePortalSitemap(false)">&#215;</button>
+      <button type="button" data-sitemap-close="" aria-label="Cerrar menú" onclick="this.dispatch('shell:sitemap', {{ open: false }})">&#215;</button>
     </li>
     <xsl:apply-templates select="item[not(@user) or @user=$session:user_login]" mode="sitemap:widget"/>
   </xsl:template>

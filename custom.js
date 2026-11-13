@@ -314,10 +314,6 @@ xo.listener.on('fetch::model[not(//processing-instruction())]', function ({ docu
     attachDemoStylesheet(document, tag);
 })
 
-xo.listener.on('hashchange', function () {
-    if (typeof toggleSidebar === "function") toggleSidebar(false)
-})
-
 xo.listener.on('beforeRender', ({ dom }) => {
     dom?.querySelectorAll(".cell[fecha]").forEach(cell => { cell.setAttributes(cell.select("ancestor-or-self::*/@div[1]|ancestor-or-self::*/@rs[1]|ancestor-or-self::*/@un[1]|ancestor-or-self::*/@cta[1]|ancestor-or-self::*/@cl[1]|ancestor-or-self::*/@fecha[1]").reduce((obj, attr) => { obj[attr.name] = attr.value || ''; return obj }, {})) });
 })
@@ -1161,56 +1157,72 @@ validation.highlight = function (target) {
     }
 }
 
-async function generateExcelFile(table, name) {
-    let progress = await xo.sources["loading.xslt"].render();
-    await xover.delay(500);
-    //if (this.Interval) window.clearInterval(this.Interval);
-    let _progress = 0;
-    let progress_bar = progress[0].querySelector('progress');
-    progress_bar.style.display = 'inline';
+;(() => {
+    xo.listener.on('report:export', async function ({ target }) {
+        const table = document.querySelector('#shell main table');
+        if (!table || target.disabled) return;
 
-    //this.Interval = setInterval(function () {
-    //    if (progress_bar) {
-    //        progress_bar.value = _progress;
-    //        console.log(_progress);
-    //    }
-    //}, 500);
-    table = table.cloneNode(true);
-    table.querySelectorAll('del,.hidden').toArray().remove();
-    let set_computed_background = function (cell) {
-        let border = cell.style.border;
-        let backgroundColor = cell.style.backgroundColor;
-        let color = cell.style.color;
-        let styleSheets = document.styleSheets;
-        for (let styleSheet of [...styleSheets]) {
-            for (let rule of [...styleSheet.rules].filter(rule => rule.selectorText && (rule.style.border || rule.style.backgroundColor || rule.style.color) && cell.matches(rule.selectorText))) {
-                if (!border && rule.style.border) {
-                    cell.style.border = rule.style.border;
-                }
-                if (!backgroundColor && rule.style.backgroundColor) {
-                    cell.style.backgroundColor = rule.style.backgroundColor;
-                }
-                if (!color && rule.style.color) {
-                    cell.style.color = rule.style.color;
+        target.disabled = true;
+        try {
+            await generateExcelFile(table, xo.stores.active.tag);
+        } catch (error) {
+            xo.dom.alert(error.message);
+        } finally {
+            target.disabled = false;
+        }
+    });
+
+    async function generateExcelFile(table, name) {
+        let progress = await xo.sources["loading.xslt"].render();
+        await xover.delay(500);
+        //if (this.Interval) window.clearInterval(this.Interval);
+        let _progress = 0;
+        let progress_bar = progress[0].querySelector('progress');
+        progress_bar.style.display = 'inline';
+
+        //this.Interval = setInterval(function () {
+        //    if (progress_bar) {
+        //        progress_bar.value = _progress;
+        //        console.log(_progress);
+        //    }
+        //}, 500);
+        table = table.cloneNode(true);
+        table.querySelectorAll('del,.hidden').toArray().remove();
+        let set_computed_background = function (cell) {
+            let border = cell.style.border;
+            let backgroundColor = cell.style.backgroundColor;
+            let color = cell.style.color;
+            let styleSheets = document.styleSheets;
+            for (let styleSheet of [...styleSheets]) {
+                for (let rule of [...styleSheet.rules].filter(rule => rule.selectorText && (rule.style.border || rule.style.backgroundColor || rule.style.color) && cell.matches(rule.selectorText))) {
+                    if (!border && rule.style.border) {
+                        cell.style.border = rule.style.border;
+                    }
+                    if (!backgroundColor && rule.style.backgroundColor) {
+                        cell.style.backgroundColor = rule.style.backgroundColor;
+                    }
+                    if (!color && rule.style.color) {
+                        cell.style.color = rule.style.color;
+                    }
                 }
             }
         }
-    }
-    let rows = table.getElementsByTagName("tr");
-    let r = 0;
-    for (let row of rows) {
-        ++r;
-        _progress = r / rows.length * 100;
-        [...row.getElementsByTagName("td")].forEach(el => set_computed_background(el));
-        if (r % (rows.length / 10) == 0) {
-            progress_bar.value = _progress;
-            await xover.delay(500);
+        let rows = table.getElementsByTagName("tr");
+        let r = 0;
+        for (let row of rows) {
+            ++r;
+            _progress = r / rows.length * 100;
+            [...row.getElementsByTagName("td")].forEach(el => set_computed_background(el));
+            if (r % (rows.length / 10) == 0) {
+                progress_bar.value = _progress;
+                await xover.delay(500);
+            }
         }
+        xo.dom.toExcel(table, name.split("?")[0])
+        progress.remove();
+        if (this.Interval) window.clearInterval(this.Interval);
     }
-    xo.dom.toExcel(table, name.split("?")[0])
-    progress.remove();
-    if (this.Interval) window.clearInterval(this.Interval);
-}
+})();
 
 xo.listener.on("mousedown", function (event) {
     if (!(event && event.buttons == 1)) return
@@ -1473,16 +1485,26 @@ function taxanView(hash = location.hash) {
 // Taxan reports share a single slot even when XOver retains the previous route scope.
 xo.listener.on('render', ({ element }) => {
     if (!element?.matches?.('.taxan-report') || !element.isConnected) return;
-    for (const report of document.querySelectorAll('#shell main .taxan-report')) {
+    const shell = element.closest('#shell');
+    if (!shell) return;
+    const nav = element.querySelector('.taxan-filters');
+    if (nav) shell.querySelector(':scope > .taxan-navbar-slot')?.replaceChildren(nav);
+    for (const report of shell.querySelectorAll('main .taxan-report')) {
         if (report !== element) report.remove();
     }
+});
+
+xo.listener.on('hashchange', () => {
+    document.querySelector('#shell > .taxan-navbar-slot')?.replaceChildren();
 });
 
 document.addEventListener('change', event => {
     const checkbox = event.target;
     if (!checkbox.matches?.('input[data-taxan-year]')) return;
-    const report = checkbox.closest('.taxan-report');
-    const selected = new Set([...report.querySelectorAll('input[data-taxan-year]:checked')].map(input => input.dataset.taxanYear));
+    const nav = checkbox.closest('.taxan-filters');
+    const report = nav?.closest('#shell')?.querySelector('main .taxan-report');
+    if (!report) return;
+    const selected = new Set([...nav.querySelectorAll('input[data-taxan-year]:checked')].map(input => input.dataset.taxanYear));
     if (!selected.size) {
         checkbox.checked = true;
         return;

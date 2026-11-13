@@ -8,11 +8,17 @@
   <xsl:template match="/report">
     <xsl:variable name="years" select="comparativo/cuenta/saldo[generate-id()=generate-id(key('annual-year',@periodo)[1])]"/>
     <section class="taxan-report"><style>.taxan-report{padding:18px;background:#f4f5f8;color:#111;font:14px Arial,sans-serif}
-.taxan-report nav.taxan-filters{display:flex;flex-direction:column;align-items:flex-start;gap:4px;margin:0 0 16px}
-.taxan-report .taxan-data-note{margin:0;font-size:.85em;line-height:1.4}
-.taxan-report nav a{padding:7px 10px;border:1px solid #aab7c6;border-radius:4px;color:#18334d;text-decoration:none;background:white}
-.taxan-report nav a[aria-current]{color:white;background:#18334d}
 .taxan-report .excel-scroll{overflow:auto}.taxan-report .excel-sheet{border-collapse:collapse;table-layout:fixed;background:white}
+@media screen {
+  .taxan-report .excel-sheet {
+    table-layout: auto;
+    width: max-content;
+  }
+  .taxan-report .excel-sheet td,
+  .taxan-report .excel-sheet th {
+    padding: 3px 8px;
+  }
+}
 .taxan-report .excel-sheet td.excel-negative{color:#ff0000}
 .taxan-report .excel-sheet td:empty::after{content:'\00a0'}
 .taxan-report .excel-sheet .style0 {text-align:general; vertical-align:bottom; white-space:nowrap; color:windowtext; font-size:10.0pt; font-weight:400; font-style:normal; text-decoration:none; font-family:Arial, sans-serif; border:none;}
@@ -24,7 +30,8 @@
 .taxan-report .excel-sheet .font19 {color:red; font-size:9.0pt; font-weight:700; font-style:normal; text-decoration:underline; text-underline-style:single; font-family:Arial, sans-serif;}
 .taxan-report .excel-sheet .font32 {color:black; font-size:9.0pt; font-weight:700; font-style:normal; text-decoration:none; font-family:Tahoma, sans-serif;}
 .taxan-report .excel-sheet .font33 {color:black; font-size:9.0pt; font-weight:400; font-style:normal; text-decoration:none; font-family:Tahoma, sans-serif;}
-.taxan-report .excel-sheet td {padding:0px; color:windowtext; font-size:10.0pt; font-weight:400; font-style:normal; text-decoration:none; font-family:Arial, sans-serif; text-align:general; vertical-align:bottom; border:none; white-space:nowrap;}
+.taxan-report .excel-sheet td {color:windowtext; font-size:10.0pt; font-weight:400; font-style:normal; text-decoration:none; font-family:Arial, sans-serif; text-align:general; vertical-align:bottom; border:none; white-space:nowrap;}
+@media print { .taxan-report .excel-sheet td { padding: 0; } }
 .taxan-report .excel-sheet .xl68 {color:white; font-size:8.0pt;}
 .taxan-report .excel-sheet .xl69 {font-size:9.0pt; text-align:left;}
 .taxan-report .excel-sheet .xl70 {font-size:9.0pt;}
@@ -194,7 +201,7 @@
 .taxan-report .excel-sheet .xl251 {font-size:9.0pt; font-weight:700; text-align:center; border-top:none; border-right:none; border-bottom:1.0pt solid windowtext; border-left:1.0pt solid windowtext; background:#99CCFF;}
 .taxan-report .excel-sheet .xl252 {font-size:9.0pt; font-weight:700; text-align:center; border-top:none; border-right:none; border-bottom:1.0pt solid windowtext; border-left:none; background:#99CCFF;}
 .taxan-report .excel-sheet .xl253 {font-size:9.0pt; font-weight:700; text-align:center; border-top:none; border-right:1.0pt solid windowtext; border-bottom:1.0pt solid windowtext; border-left:none; background:#99CCFF;}
-.taxan-report .excel-sheet .xl254 {font-size:9.0pt; font-weight:700; text-align:center; vertical-align:middle; border:.5pt solid windowtext; background:yellow;}.taxan-report [hidden]{display:none!important}.taxan-years{display:flex;gap:.65rem;align-items:center}.taxan-years label{white-space:nowrap}</style>
+.taxan-report .excel-sheet .xl254 {font-size:9.0pt; font-weight:700; text-align:center; vertical-align:middle; border:.5pt solid windowtext; background:yellow;}.taxan-report [hidden]{display:none!important}</style>
         <xsl:call-template name="taxan-navbar">
           <xsl:with-param name="years" select="$years"/>
         </xsl:call-template>

@@ -16,12 +16,13 @@
   <xsl:template match="*" mode="shell:nav-title" priority="1">
     <header class="portal-shell-header">
         <div class="portal-shell-brand">
-          <button type="button" class="menu_toggle" aria-label="Menú de reportes" aria-controls="sitemap" aria-expanded="false" aria-disabled="true" disabled="disabled" onclick="event.stopPropagation(); togglePortalSitemap()">&#9776;</button>
+          <button type="button" class="menu_toggle" aria-label="Menú de reportes" aria-controls="sitemap" aria-expanded="false" aria-disabled="true" disabled="disabled" onclick="this.dispatch('shell:sitemap')">&#9776;</button>
           <a href="/" title="Ir a la página principal"><img src="/assets/logo.png" alt="Panax BI"/></a>
         </div>
         <xsl:apply-templates mode="portal:title" select="."/>
         <xsl:call-template name="portal-menu"/>
       </header>
+      <div class="taxan-navbar-slot"/>
   </xsl:template>
 
   <xsl:template match="*" mode="portal:title">

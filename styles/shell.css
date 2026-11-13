@@ -3106,3 +3106,41 @@ body:has(.report-loader) #shell .portal-shell-header .menu_toggle[aria-expanded=
 }
 #shell > #sitemap .sidebar-dropdown .sidebar-link { color: #e0e8ef; }
 #shell > #sitemap :is(summary, a.sidebar-link):hover { background: #344e63 !important; }
+
+#shell > .taxan-navbar-slot {
+    flex: none;
+}
+#shell > .taxan-navbar-slot:empty {
+    display: none;
+}
+#shell .taxan-filters {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 12px 18px;
+    background: #f4f5f8;
+    color: #111;
+    font: 14px Arial, sans-serif;
+}
+#shell .taxan-data-note {
+    margin: 0;
+    font-size: .85em;
+    line-height: 1.4;
+}
+#shell .taxan-years {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+#shell .taxan-years label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+#shell .taxan-years .form-check-input {
+  flex: none;
+  margin: 0;
+}
