@@ -1479,10 +1479,21 @@ xo.listener.on('render', ({ element }) => {
 });
 
 document.addEventListener('change', event => {
-    const select = event.target;
-    if (select.id !== 'taxan-year' || !taxanView()) return;
-    for (const cell of select.closest('.taxan-report').querySelectorAll('.taxan-history [data-year]')) {
-        cell.hidden = select.value !== 'all' && cell.dataset.year !== select.value;
+    const checkbox = event.target;
+    if (!checkbox.matches?.('input[data-taxan-year]')) return;
+    const report = checkbox.closest('.taxan-report');
+    const selected = new Set([...report.querySelectorAll('input[data-taxan-year]:checked')].map(input => input.dataset.taxanYear));
+    if (!selected.size) {
+        checkbox.checked = true;
+        return;
+    }
+    for (const cell of report.querySelectorAll('.excel-sheet [data-year]')) {
+        cell.hidden = !selected.has(cell.dataset.year);
+    }
+    for (const cell of report.querySelectorAll('.excel-sheet [data-span]')) {
+        const count = cell.dataset.span.split(' ').filter(year => year === '-' || selected.has(year)).length;
+        cell.hidden = count === 0;
+        cell.colSpan = Math.max(count, 1);
     }
 });
 

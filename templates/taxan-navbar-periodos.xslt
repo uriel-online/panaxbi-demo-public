@@ -1,7 +1,6 @@
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" xmlns:xo="http://panax.io/xover" exclude-result-prefixes="xo">
   <xsl:template name="taxan-navbar">
     <xsl:param name="years"/>
-    <xsl:param name="selected-year"/>
         <nav aria-label="Financial statements">
           <a href="#taxan/income-mxn">
             <xsl:if test="@id='income-mxn'">
@@ -27,16 +26,11 @@
             </xsl:if>
             <xsl:text>Balance Sheet USD</xsl:text>
           </a>
-          <label for="taxan-year">Año</label>
-  <select id="taxan-year" class="form-select form-select-sm" style="width:auto">
-    <option value="all">Todos · 2023–2026</option>
-    <xsl:for-each select="$years">
-      <xsl:sort select="@periodo"/>
-      <option value="{@periodo}">
-        <xsl:if test="@periodo=$selected-year"><xsl:attribute name="selected">selected</xsl:attribute></xsl:if>
-        <xsl:value-of select="@periodo"/><xsl:if test="@simulado='1'"> · Simulado</xsl:if>
-      </option>
-    </xsl:for-each>
-  </select>
+          <div class="taxan-years" role="group" aria-label="Años del reporte">
+            <xsl:for-each select="$years">
+              <xsl:sort select="@periodo" order="descending"/>
+              <label><input type="checkbox" class="form-check-input" data-taxan-year="{@periodo}" checked="checked"/> <xsl:value-of select="@periodo"/></label>
+            </xsl:for-each>
+          </div>
 </nav>
 </xsl:template></xsl:stylesheet>
