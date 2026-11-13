@@ -57,7 +57,7 @@
   },
   "settings": {
     "~.xslt||~.xml": {
-      "cache": "no-cache"
+      "cache": "reload"
     },
     "#shell": {
       "hash": ""
