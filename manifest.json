@@ -3,7 +3,7 @@
     "request": "https://server.panaxbi.com/gateway.asp?action=report",
     "login": "POST https://server.panaxbi.com/gateway.asp?action=login",
     "logout": "POST https://server.panaxbi.com/gateway.asp?action=logout",
-    "taxan": "https://server.panaxbi.com/gateway.asp?action=soaddi-data"
+    "taxan": "https://server.panaxbi.com/gateway.asp?action=soaddi-balances"
   },
   "sources": {
     "#": "#shell",
@@ -24,25 +24,25 @@
     },
     "#taxan/income-mxn": {
       "server:taxan": {
-        "action": "soaddi-data",
+        "action": "soaddi-balances",
         "view": "income-mxn"
       }
     },
     "#taxan/income-usd": {
       "server:taxan": {
-        "action": "soaddi-data",
+        "action": "soaddi-balances",
         "view": "income-usd"
       }
     },
     "#taxan/balance-mxn": {
       "server:taxan": {
-        "action": "soaddi-data",
+        "action": "soaddi-balances",
         "view": "balance-mxn"
       }
     },
     "#taxan/balance-usd": {
       "server:taxan": {
-        "action": "soaddi-data",
+        "action": "soaddi-balances",
         "view": "balance-usd"
       }
     }
@@ -64,7 +64,7 @@
     "#taxan/income-mxn||#taxan/income-usd||#taxan/balance-mxn||#taxan/balance-usd": {
       "stylesheets": [
         {
-          "href": "taxan.xslt",
+          "href": "taxan.xslt?v=20260707.6",
           "target": "@#shell main"
         }
       ],

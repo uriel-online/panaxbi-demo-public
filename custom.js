@@ -213,9 +213,9 @@ window.addEventListener('failure', event => {
     const url = new URL(response.url);
     if (url.origin !== new URL(xo.manifest.server.request).origin) return;
     const action = url.searchParams.get('action');
-    if (action !== 'report' && action !== 'soaddi-data') return;
+    if (action !== 'report' && action !== 'soaddi-balances') return;
     statusCodes.ignored.push(401);
-    if (action === 'soaddi-data') {
+    if (action === 'soaddi-balances') {
         if (xo.session.user_login !== 'taxan' || !taxanView()) return;
         showDemoLogin(location.hash).catch(error => xo.dom.alert(error.message));
     } else {
