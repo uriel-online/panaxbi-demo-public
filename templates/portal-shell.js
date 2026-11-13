@@ -12,7 +12,15 @@ function togglePortalSitemap(show) {
     sidebar.style.width = shown ? '0px' : '100%';
 }
 
-function syncPortalActions() {
+function syncPortalHeader() {
+    const heading = document.querySelector('.portal-shell-title h1');
+    if (heading) {
+        const route = location.hash.split('?')[0];
+        const links = document.querySelectorAll('#sitemap a[href]');
+        const report = Array.from(links).find(link => link.getAttribute('href') === route);
+        const title = report?.textContent.trim() || 'Panax BI';
+        if (heading.textContent !== title) heading.textContent = title;
+    }
     const actions = document.querySelector('.portal-report-actions');
     if (actions) actions.hidden = !document.querySelector('#shell main table');
 }
@@ -46,10 +54,10 @@ async function runPortalAction(action, button) {
     }
 }
 
-xo.listener.on('render', () => requestAnimationFrame(syncPortalActions));
+xo.listener.on('render', () => requestAnimationFrame(syncPortalHeader));
 xo.listener.on('hashchange', () => {
     togglePortalSitemap(false);
-    requestAnimationFrame(syncPortalActions);
+    requestAnimationFrame(syncPortalHeader);
 });
 document.addEventListener('click', event => {
     if (!event.target.closest('#sitemap, [aria-controls="sitemap"]')) togglePortalSitemap(false);

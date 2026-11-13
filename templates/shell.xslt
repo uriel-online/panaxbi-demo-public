@@ -25,7 +25,7 @@
   </xsl:template>
 
   <xsl:template match="*" mode="portal:title">
-    <div class="portal-shell-title" xo-store="#sitemap" xo-stylesheet="/title.xslt"/>
+    <div class="portal-shell-title"><h1>Panax BI</h1></div>
   </xsl:template>
 
   <xsl:template match="*" mode="shell:sitemap" priority="1">
