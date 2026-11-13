@@ -31,4 +31,8 @@
   <xsl:template match="*" mode="shell:sitemap" priority="1">
     <aside id="sitemap" class="sidebar" xo-source="#sitemap" xo-stylesheet="/sitemap.xslt"/>
   </xsl:template>
+
+  <xsl:template match="*|@*" mode="shell:page-menu" priority="1">
+    <span class="page-menu" xo-source="active" xo-stylesheet="/page_navbar.xslt"/>
+  </xsl:template>
 </xsl:stylesheet>

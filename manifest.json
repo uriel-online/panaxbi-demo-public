@@ -10,7 +10,6 @@
     "#login": "login.xml",
     "#sitemap": "navigation.xml",
     "widgets/page_controls.xslt": "page_controls.xslt",
-    "widgets/page_navbar.xslt": "page_navbar.xslt",
     "widgets/shell_buttons.xslt": "shell_buttons.xslt",
     "widgets/settings.xslt": "settings.xslt",
     "widgets/shell/page_navbar.xslt": "page_navbar.xslt",
