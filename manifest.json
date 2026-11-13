@@ -22,17 +22,67 @@
         "@get_budget": 0
       }
     },
-    "^#taxan/.*": "taxan-route.xml"
+    "#taxan/income-mxn": {
+      "server:taxan": {
+        "action": "soaddi-data",
+        "view": "income-mxn"
+      }
+    },
+    "#taxan/income-usd": {
+      "server:taxan": {
+        "action": "soaddi-data",
+        "view": "income-usd"
+      }
+    },
+    "#taxan/balance-mxn": {
+      "server:taxan": {
+        "action": "soaddi-data",
+        "view": "balance-mxn"
+      }
+    },
+    "#taxan/balance-usd": {
+      "server:taxan": {
+        "action": "soaddi-data",
+        "view": "balance-usd"
+      }
+    }
   },
   "settings": {
     "#shell": {
       "hash": ""
     },
-    "#server:request||#server:taxan||#dashboardRequest||#polizas||#capital_trabajo||#flujo_efectivo||#razones_financieras||#concentrado_er_balance||#productividad_individual": {
-      "trackers": [{ "label": "Cargando reporte…" }]
-    },
     "#server:login||#server:logout||#server:request": {
       "credentials": "include"
+    },
+    "#server:request||#dashboardRequest||#polizas||#capital_trabajo||#flujo_efectivo||#razones_financieras||#concentrado_er_balance||#productividad_individual": {
+      "trackers": [
+        {
+          "label": "Cargando reporte…"
+        }
+      ]
+    },
+    "#taxan/income-mxn||#taxan/income-usd||#taxan/balance-mxn||#taxan/balance-usd": {
+      "stylesheets": [
+        {
+          "href": "taxan.xslt",
+          "target": "@#shell main"
+        }
+      ],
+      "resumable": false
+    },
+    "#server:taxan": {
+      "credentials": "include",
+      "cache": "no-store",
+      "resumable": false,
+      "rejectCodes": 400,
+      "headers": {
+        "Accept": "application/xml"
+      },
+      "trackers": [
+        {
+          "label": "Cargando reporte…"
+        }
+      ]
     }
   }
 }

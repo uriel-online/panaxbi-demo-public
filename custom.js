@@ -181,7 +181,6 @@ function trackReportRequest(endpoint, tag) {
 
 const guestReports = new Set(['#estado_resultados_mensual', '#tablero_direccion']);
 const taxanViews = new Set(['income-mxn', 'income-usd', 'balance-mxn', 'balance-usd']);
-let taxanRequest;
 
 function demoRoute(user, hash) {
     if (user === 'taxan') return taxanView(hash) ? hash : '#taxan/income-mxn';
@@ -195,7 +194,6 @@ function setDemoRoute(route, returnTo) {
 
 async function showDemoLogin(returnTo) {
     setDemoRoute('#login', returnTo);
-    taxanRequest?.abort();
     document.getElementById('shell')?.remove();
     for (const store of Object.values(xo.stores)) store?.remove?.();
     xo.session.user_login = undefined;
@@ -213,16 +211,21 @@ window.addEventListener('failure', event => {
     const { response, statusCodes } = event.detail || {};
     if (response?.status !== 401 || !statusCodes) return;
     const url = new URL(response.url);
-    if (url.searchParams.get('action') !== 'report' ||
-        url.origin !== new URL(xo.manifest.server.request).origin) return;
+    if (url.origin !== new URL(xo.manifest.server.request).origin) return;
+    const action = url.searchParams.get('action');
+    if (action !== 'report' && action !== 'soaddi-data') return;
     statusCodes.ignored.push(401);
-    recoverGuestSession(response).catch(error => xo.dom.alert(error.message));
+    if (action === 'soaddi-data') {
+        if (xo.session.user_login !== 'taxan' || !taxanView()) return;
+        showDemoLogin(location.hash).catch(error => xo.dom.alert(error.message));
+    } else {
+        recoverGuestSession(response).catch(error => xo.dom.alert(error.message));
+    }
 }, true);
 
 async function openDemoReport(route) {
     setDemoRoute(route);
-    if (taxanView(route)) await renderTaxanReport();
-    else if (route !== '#') await xo.stores.active.render();
+    if (route !== '#') await xo.stores.active.render();
 }
 
 Object.defineProperty(xo.session, 'login', {
@@ -1467,55 +1470,14 @@ function taxanView(hash = location.hash) {
     return hash.startsWith('#taxan/') && taxanViews.has(view) ? view : null;
 }
 
-async function renderTaxanReport() {
-    const view = taxanView();
-    if (xo.session.user_login !== 'taxan' || !view) return;
-    const target = document.querySelector('main');
-    if (!target) return;
-
-    taxanRequest?.abort();
-    const request = new AbortController();
-    taxanRequest = request;
-    target.replaceChildren();
-    const endpoint = new URL(xover.manifest.server.taxan);
-    endpoint.searchParams.set('view', view);
-    const trackerRequest = trackReportRequest(endpoint.href, '#server:taxan');
-    request.signal.addEventListener('abort', () => finishReportTrackers(trackerRequest), { once: true });
-
-    try {
-        const response = await fetch(endpoint, { headers: { Accept: 'application/xml' }, credentials: 'include', signal: request.signal });
-        if (request.signal.aborted) return;
-        if (response.status === 401) {
-            await showDemoLogin('#taxan/' + view);
-            return;
-        }
-        if (!response.ok || !/^application\/xml\b/i.test(response.headers.get('content-type') || '')) {
-            throw new Error('No se pudo obtener el reporte.');
-        }
-
-        const data = xover.xml.createDocument(await response.text());
-        if (data.documentElement?.localName !== 'report' || data.documentElement.getAttribute('id') !== view) {
-            throw new Error('El servidor devolvió un reporte inesperado.');
-        }
-        if (request.signal.aborted) return;
-        const store = new xover.Store(data);
-        target.replaceChildren();
-        await store.render({ target, href: 'taxan.xslt' });
-        if (!target.querySelector('table[data-report]')) throw new Error('No se pudo mostrar el reporte.');
-    } catch (error) {
-        if (!request.signal.aborted) target.textContent = error.message;
-    } finally {
-        finishReportTrackers(trackerRequest);
-    }
-}
-
-window.addEventListener('hashchange', () => {
-    if (taxanView()) renderTaxanReport();
-    else {
-        taxanRequest?.abort();
-        document.querySelector('.taxan-report')?.remove();
+// Taxan reports share a single slot even when XOver retains the previous route scope.
+xo.listener.on('render', ({ element }) => {
+    if (!element?.matches?.('.taxan-report') || !element.isConnected) return;
+    for (const report of document.querySelectorAll('#shell main .taxan-report')) {
+        if (report !== element) report.remove();
     }
 });
+
 const requested = location.hash === '#login' ? history.state?.returnTo : location.hash;
 
 // XOver may resolve the active store as soon as it seeds history.
@@ -1524,6 +1486,10 @@ setDemoRoute('#login', requested);
 xo.listener.on('beforeRender', ({ dom, event }) => {
     if (xo.session.status === 'authorized' && dom?.matches?.('.login')) event.preventDefault();
     if (xo.session.status !== 'authorized' && dom?.querySelector?.('#shell')) event.preventDefault();
+    if (dom?.matches?.('.taxan-report') &&
+        (xo.session.user_login !== 'taxan' || dom.querySelector('table[data-report]')?.dataset.report !== taxanView())) {
+        event.preventDefault();
+    }
 });
 
 let initialReport;
