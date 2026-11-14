@@ -3,7 +3,7 @@
     "request": "https://server.panaxbi.com/gateway.asp?action=report",
     "login": "POST https://server.panaxbi.com/gateway.asp?action=login",
     "logout": "POST https://server.panaxbi.com/gateway.asp?action=logout",
-    "taxan": "https://server.panaxbi.com/gateway.asp?action=soaddi-balances"
+    "taxan": "https://api-dev.panaxbi.com/request.asp"
   },
   "sources": {
     "#": "#shell",
@@ -32,25 +32,25 @@
     },
     "#taxan/income-mxn": {
       "server:taxan": {
-        "action": "soaddi-balances",
+        "FROM": "fin.GetReportAccountBalances",
         "view": "income-mxn"
       }
     },
     "#taxan/income-usd": {
       "server:taxan": {
-        "action": "soaddi-balances",
+        "FROM": "fin.GetReportAccountBalances",
         "view": "income-usd"
       }
     },
     "#taxan/balance-mxn": {
       "server:taxan": {
-        "action": "soaddi-balances",
+        "FROM": "fin.GetReportAccountBalances",
         "view": "balance-mxn"
       }
     },
     "#taxan/balance-usd": {
       "server:taxan": {
-        "action": "soaddi-balances",
+        "FROM": "fin.GetReportAccountBalances",
         "view": "balance-usd"
       }
     }

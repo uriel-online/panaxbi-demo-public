@@ -179,6 +179,8 @@ function trackReportRequest(endpoint, tag) {
     return request;
 }
 
+const taxanApi = 'https://api-dev.panaxbi.com/';
+
 const guestReports = new Set(['#estado_resultados_mensual', '#tablero_direccion']);
 const taxanViews = new Set(['income-mxn', 'income-usd', 'balance-mxn', 'balance-usd']);
 
@@ -211,11 +213,11 @@ window.addEventListener('failure', event => {
     const { response, statusCodes } = event.detail || {};
     if (response?.status !== 401 || !statusCodes) return;
     const url = new URL(response.url);
-    if (url.origin !== new URL(xo.manifest.server.request).origin) return;
-    const action = url.searchParams.get('action');
-    if (action !== 'report' && action !== 'soaddi-balances') return;
+    const taxan = url.origin === new URL(taxanApi).origin && url.pathname === '/request.asp';
+    const guest = url.origin === new URL(xo.manifest.server.request).origin && url.searchParams.get('action') === 'report';
+    if (!taxan && !guest) return;
     statusCodes.ignored.push(401);
-    if (action === 'soaddi-balances') {
+    if (taxan) {
         if (xo.session.user_login !== 'taxan' || !taxanView()) return;
         showDemoLogin(location.hash).catch(error => xo.dom.alert(error.message));
     } else {
@@ -233,7 +235,9 @@ Object.defineProperty(xo.session, 'login', {
         xo.session.status = 'authorizing';
         let user;
         try {
-            const endpoint = xo.manifest.server.login.replace(/^POST\s+/i, '');
+            const endpoint = username.trim().toLowerCase() === 'taxan'
+                ? taxanApi + 'login.asp'
+                : xo.manifest.server.login.replace(/^POST\s+/i, '');
             const auth = btoa(String.fromCharCode(...new TextEncoder().encode(username + ':' + password)));
             const login = await fetch(endpoint, {
                 method: 'POST',
@@ -292,7 +296,9 @@ document.addEventListener('submit', async event => {
 
 Object.defineProperty(xo.session, 'logout', {
     value: async function () {
-        const response = await fetch(xo.manifest.server.logout.replace(/^POST\s+/i, ''), {
+        const endpoint = xo.session.user_login === 'taxan' ? taxanApi + 'logout.asp'
+            : xo.manifest.server.logout.replace(/^POST\s+/i, '');
+        const response = await fetch(endpoint, {
             method: 'POST', credentials: 'include'
         });
         if (!response.ok) throw new Error('No se pudo cerrar la sesión.');
