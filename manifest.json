@@ -3,7 +3,7 @@
     "request": "https://server.panaxbi.com/gateway.asp?action=report",
     "login": "POST https://server.panaxbi.com/gateway.asp?action=login",
     "logout": "POST https://server.panaxbi.com/gateway.asp?action=logout",
-    "taxan": "https://api-dev.panaxbi.com/request.asp"
+    "taxan": "https://server.panaxbi.com/request.asp"
   },
   "sources": {
     "#": "#shell",

@@ -179,7 +179,7 @@ function trackReportRequest(endpoint, tag) {
     return request;
 }
 
-const taxanApi = 'https://api-dev.panaxbi.com/';
+const taxanApi = 'https://server.panaxbi.com/';
 
 const guestReports = new Set(['#estado_resultados_mensual', '#tablero_direccion']);
 const taxanViews = new Set(['income-mxn', 'income-usd', 'balance-mxn', 'balance-usd']);
