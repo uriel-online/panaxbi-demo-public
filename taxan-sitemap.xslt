@@ -9234,11 +9234,11 @@
                         <xsl:otherwise>
                           <xsl:choose>
                             <xsl:when test="translate(normalize-space('Manufacturing Expenses-Injection &amp; Silk Print 35%'), ' ', '')=&quot;ManufacturingExpenses-Injection&amp;SilkPrint35%&quot;">
-                              <xsl:text>Manufacturing Expenses-</xsl:text>
+                              <xsl:text>Manufacturing Expenses - </xsl:text>
                               <span class="font19">
-                                <xsl:text>Injection &amp; Silk P</xsl:text>
+                                <xsl:text>Injection &amp; Silk Print</xsl:text>
                               </span>
-                              <xsl:text>rint 35%</xsl:text>
+                              <xsl:text> 35%</xsl:text>
                             </xsl:when>
                             <xsl:otherwise>
                               <xsl:value-of select="'Manufacturing Expenses-Injection &amp; Silk Print 35%'"/>
@@ -14261,7 +14261,7 @@
                         <xsl:otherwise>
                           <xsl:choose>
                             <xsl:when test="translate(normalize-space('Manufacturing Expenses-Casing Assembly 20%'), ' ', '')=&quot;ManufacturingExpenses-CasingAssembly20%&quot;">
-                              <xsl:text>Manufacturing Expenses-</xsl:text>
+                              <xsl:text>Manufacturing Expenses - </xsl:text>
                               <span class="font19">
                                 <xsl:text>Casing Assembly</xsl:text>
                               </span>
@@ -19288,11 +19288,11 @@
                         <xsl:otherwise>
                           <xsl:choose>
                             <xsl:when test="translate(normalize-space('Manufacturing Expenses-Stamping &amp; Welding &amp; Coating 35%'), ' ', '')=&quot;ManufacturingExpenses-Stamping&amp;Welding&amp;Coating35%&quot;">
-                              <xsl:text>Manufacturing Expenses-</xsl:text>
+                              <xsl:text>Manufacturing Expenses - </xsl:text>
                               <span class="font19">
-                                <xsl:text>Stamping &amp; Weld</xsl:text>
+                                <xsl:text>Stamping &amp; Welding &amp; Coating</xsl:text>
                               </span>
-                              <xsl:text>ing &amp; Coating 35%</xsl:text>
+                              <xsl:text> 35%</xsl:text>
                             </xsl:when>
                             <xsl:otherwise>
                               <xsl:value-of select="'Manufacturing Expenses-Stamping &amp; Welding &amp; Coating 35%'"/>
@@ -24315,13 +24315,11 @@
                         <xsl:otherwise>
                           <xsl:choose>
                             <xsl:when test="translate(normalize-space('Manufacturing Expenses-Molding 10%'), ' ', '')=&quot;ManufacturingExpenses-Molding10%&quot;">
-                              <xsl:text>Manufacturing Expenses-</xsl:text>
+                              <xsl:text>Manufacturing Expenses - </xsl:text>
                               <span class="font19">
                                 <xsl:text>Molding</xsl:text>
                               </span>
-                              <span class="font17">
-                                <xsl:text> 10%</xsl:text>
-                              </span>
+                              <xsl:text> 10%</xsl:text>
                             </xsl:when>
                             <xsl:otherwise>
                               <xsl:value-of select="'Manufacturing Expenses-Molding 10%'"/>
@@ -42168,14 +42166,11 @@
                         <xsl:otherwise>
                           <xsl:choose>
                             <xsl:when test="translate(normalize-space('Generals Expenses-Injection &amp; Silk Print 35%'), ' ', '')=&quot;GeneralsExpenses-Injection&amp;SilkPrint35%&quot;">
-                              <xsl:text>Generals Expenses-</xsl:text>
+                              <xsl:text>Generals Expenses - </xsl:text>
                               <span class="font19">
                                 <xsl:text>Injection &amp; Silk Print</xsl:text>
                               </span>
-                              <span class="font17">
-                                <xsl:text> 3</xsl:text>
-                              </span>
-                              <xsl:text>5%</xsl:text>
+                              <xsl:text> 35%</xsl:text>
                             </xsl:when>
                             <xsl:otherwise>
                               <xsl:value-of select="'Generals Expenses-Injection &amp; Silk Print 35%'"/>
@@ -49838,13 +49833,11 @@
                         <xsl:otherwise>
                           <xsl:choose>
                             <xsl:when test="translate(normalize-space('Generals Expenses-Casing Assembly 20%'), ' ', '')=&quot;GeneralsExpenses-CasingAssembly20%&quot;">
-                              <xsl:text>Generals Expenses-</xsl:text>
+                              <xsl:text>Generals Expenses - </xsl:text>
                               <span class="font19">
                                 <xsl:text>Casing Assembly</xsl:text>
                               </span>
-                              <span class="font17">
-                                <xsl:text> 20%</xsl:text>
-                              </span>
+                              <xsl:text> 20%</xsl:text>
                             </xsl:when>
                             <xsl:otherwise>
                               <xsl:value-of select="'Generals Expenses-Casing Assembly 20%'"/>
@@ -57507,11 +57500,11 @@
                         <xsl:otherwise>
                           <xsl:choose>
                             <xsl:when test="translate(normalize-space('Generals Expenses-Stamping &amp; Welding &amp; Coating 35%'), ' ', '')=&quot;GeneralsExpenses-Stamping&amp;Welding&amp;Coating35%&quot;">
-                              <xsl:text>Generals Expenses-</xsl:text>
+                              <xsl:text>Generals Expenses - </xsl:text>
                               <span class="font19">
-                                <xsl:text>Stamping &amp; Welding &amp;</xsl:text>
+                                <xsl:text>Stamping &amp; Welding &amp; Coating</xsl:text>
                               </span>
-                              <xsl:text> Coating 35%</xsl:text>
+                              <xsl:text> 35%</xsl:text>
                             </xsl:when>
                             <xsl:otherwise>
                               <xsl:value-of select="'Generals Expenses-Stamping &amp; Welding &amp; Coating 35%'"/>
@@ -65174,13 +65167,11 @@
                         <xsl:otherwise>
                           <xsl:choose>
                             <xsl:when test="translate(normalize-space('Generals Expenses-Molding 10%'), ' ', '')=&quot;GeneralsExpenses-Molding10%&quot;">
-                              <xsl:text>Generals Expenses-</xsl:text>
+                              <xsl:text>Generals Expenses - </xsl:text>
                               <span class="font19">
                                 <xsl:text>Molding</xsl:text>
                               </span>
-                              <span class="font17">
-                                <xsl:text> 10%</xsl:text>
-                              </span>
+                              <xsl:text> 10%</xsl:text>
                             </xsl:when>
                             <xsl:otherwise>
                               <xsl:value-of select="'Generals Expenses-Molding 10%'"/>
@@ -89540,11 +89531,11 @@
                         <xsl:otherwise>
                           <xsl:choose>
                             <xsl:when test="translate(normalize-space('Manufacturing Expenses-Injection &amp; Silk Print 35%'), ' ', '')=&quot;ManufacturingExpenses-Injection&amp;SilkPrint35%&quot;">
-                              <xsl:text>Manufacturing Expenses-</xsl:text>
+                              <xsl:text>Manufacturing Expenses - </xsl:text>
                               <span class="font19">
-                                <xsl:text>Injection &amp; Silk P</xsl:text>
+                                <xsl:text>Injection &amp; Silk Print</xsl:text>
                               </span>
-                              <xsl:text>rint 35%</xsl:text>
+                              <xsl:text> 35%</xsl:text>
                             </xsl:when>
                             <xsl:otherwise>
                               <xsl:value-of select="'Manufacturing Expenses-Injection &amp; Silk Print 35%'"/>
@@ -94567,7 +94558,7 @@
                         <xsl:otherwise>
                           <xsl:choose>
                             <xsl:when test="translate(normalize-space('Manufacturing Expenses-Casing Assembly 20%'), ' ', '')=&quot;ManufacturingExpenses-CasingAssembly20%&quot;">
-                              <xsl:text>Manufacturing Expenses-</xsl:text>
+                              <xsl:text>Manufacturing Expenses - </xsl:text>
                               <span class="font19">
                                 <xsl:text>Casing Assembly</xsl:text>
                               </span>
@@ -99594,11 +99585,11 @@
                         <xsl:otherwise>
                           <xsl:choose>
                             <xsl:when test="translate(normalize-space('Manufacturing Expenses-Stamping &amp; Welding &amp; Coating 35%'), ' ', '')=&quot;ManufacturingExpenses-Stamping&amp;Welding&amp;Coating35%&quot;">
-                              <xsl:text>Manufacturing Expenses-</xsl:text>
+                              <xsl:text>Manufacturing Expenses - </xsl:text>
                               <span class="font19">
-                                <xsl:text>Stamping &amp; Weld</xsl:text>
+                                <xsl:text>Stamping &amp; Welding &amp; Coating</xsl:text>
                               </span>
-                              <xsl:text>ing &amp; Coating 35%</xsl:text>
+                              <xsl:text> 35%</xsl:text>
                             </xsl:when>
                             <xsl:otherwise>
                               <xsl:value-of select="'Manufacturing Expenses-Stamping &amp; Welding &amp; Coating 35%'"/>
@@ -104621,13 +104612,11 @@
                         <xsl:otherwise>
                           <xsl:choose>
                             <xsl:when test="translate(normalize-space('Manufacturing Expenses-Molding 10%'), ' ', '')=&quot;ManufacturingExpenses-Molding10%&quot;">
-                              <xsl:text>Manufacturing Expenses-</xsl:text>
+                              <xsl:text>Manufacturing Expenses - </xsl:text>
                               <span class="font19">
                                 <xsl:text>Molding</xsl:text>
                               </span>
-                              <span class="font17">
-                                <xsl:text> 10%</xsl:text>
-                              </span>
+                              <xsl:text> 10%</xsl:text>
                             </xsl:when>
                             <xsl:otherwise>
                               <xsl:value-of select="'Manufacturing Expenses-Molding 10%'"/>
@@ -122474,14 +122463,11 @@
                         <xsl:otherwise>
                           <xsl:choose>
                             <xsl:when test="translate(normalize-space('Generals Expenses-Injection &amp; Silk Print 35%'), ' ', '')=&quot;GeneralsExpenses-Injection&amp;SilkPrint35%&quot;">
-                              <xsl:text>Generals Expenses-</xsl:text>
+                              <xsl:text>Generals Expenses - </xsl:text>
                               <span class="font19">
                                 <xsl:text>Injection &amp; Silk Print</xsl:text>
                               </span>
-                              <span class="font17">
-                                <xsl:text> 3</xsl:text>
-                              </span>
-                              <xsl:text>5%</xsl:text>
+                              <xsl:text> 35%</xsl:text>
                             </xsl:when>
                             <xsl:otherwise>
                               <xsl:value-of select="'Generals Expenses-Injection &amp; Silk Print 35%'"/>
@@ -130144,13 +130130,11 @@
                         <xsl:otherwise>
                           <xsl:choose>
                             <xsl:when test="translate(normalize-space('Generals Expenses-Casing Assembly 20%'), ' ', '')=&quot;GeneralsExpenses-CasingAssembly20%&quot;">
-                              <xsl:text>Generals Expenses-</xsl:text>
+                              <xsl:text>Generals Expenses - </xsl:text>
                               <span class="font19">
                                 <xsl:text>Casing Assembly</xsl:text>
                               </span>
-                              <span class="font17">
-                                <xsl:text> 20%</xsl:text>
-                              </span>
+                              <xsl:text> 20%</xsl:text>
                             </xsl:when>
                             <xsl:otherwise>
                               <xsl:value-of select="'Generals Expenses-Casing Assembly 20%'"/>
@@ -137813,11 +137797,11 @@
                         <xsl:otherwise>
                           <xsl:choose>
                             <xsl:when test="translate(normalize-space('Generals Expenses-Stamping &amp; Welding &amp; Coating 35%'), ' ', '')=&quot;GeneralsExpenses-Stamping&amp;Welding&amp;Coating35%&quot;">
-                              <xsl:text>Generals Expenses-</xsl:text>
+                              <xsl:text>Generals Expenses - </xsl:text>
                               <span class="font19">
-                                <xsl:text>Stamping &amp; Welding &amp;</xsl:text>
+                                <xsl:text>Stamping &amp; Welding &amp; Coating</xsl:text>
                               </span>
-                              <xsl:text> Coating 35%</xsl:text>
+                              <xsl:text> 35%</xsl:text>
                             </xsl:when>
                             <xsl:otherwise>
                               <xsl:value-of select="'Generals Expenses-Stamping &amp; Welding &amp; Coating 35%'"/>
@@ -145480,13 +145464,11 @@
                         <xsl:otherwise>
                           <xsl:choose>
                             <xsl:when test="translate(normalize-space('Generals Expenses-Molding 10%'), ' ', '')=&quot;GeneralsExpenses-Molding10%&quot;">
-                              <xsl:text>Generals Expenses-</xsl:text>
+                              <xsl:text>Generals Expenses - </xsl:text>
                               <span class="font19">
                                 <xsl:text>Molding</xsl:text>
                               </span>
-                              <span class="font17">
-                                <xsl:text> 10%</xsl:text>
-                              </span>
+                              <xsl:text> 10%</xsl:text>
                             </xsl:when>
                             <xsl:otherwise>
                               <xsl:value-of select="'Generals Expenses-Molding 10%'"/>
