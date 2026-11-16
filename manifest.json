@@ -5,7 +5,10 @@
     "logout": "POST https://server.panaxbi.com/gateway.asp?action=logout",
     "taxanLogin": "POST https://server.panaxbi.com/login.asp",
     "taxanLogout": "POST https://server.panaxbi.com/logout.asp",
-    "taxan": "https://server.panaxbi.com/request.asp"
+    "taxan": "https://server.panaxbi.com/request.asp",
+    "taxanIncome": "https://api-dev.panaxbi.com/request.asp",
+    "taxanIncomeLogin": "https://api-dev.panaxbi.com/login.asp",
+    "taxanIncomeLogout": "https://api-dev.panaxbi.com/logout.asp"
   },
   "sources": {
     "#": "#shell",
@@ -33,7 +36,7 @@
       }
     },
     "#taxan/income-mxn": {
-      "server:taxan": {
+      "server:taxanIncome": {
         "FROM": "fin.GetReportAccountBalances",
         "view": "income-mxn"
       }
@@ -71,13 +74,25 @@
     },
     "#server:request": {
       "credentials": "include",
-      "headers": { "Accept": "application/xml" }
+      "headers": {
+        "Accept": "application/xml"
+      }
     },
     "#tablero_direccion": {
-      "stylesheets": [{ "href": "tablero_direccion.xslt", "target": "@#shell main" }]
+      "stylesheets": [
+        {
+          "href": "tablero_direccion.xslt",
+          "target": "@#shell main"
+        }
+      ]
     },
     "#estado_resultados_mensual": {
-      "stylesheets": [{ "href": "estado_resultados_mensual.xslt", "target": "@#shell main" }]
+      "stylesheets": [
+        {
+          "href": "estado_resultados_mensual.xslt",
+          "target": "@#shell main"
+        }
+      ]
     },
     "#server:request||#polizas||#capital_trabajo||#flujo_efectivo||#razones_financieras||#concentrado_er_balance||#productividad_individual": {
       "trackers": [
@@ -85,15 +100,6 @@
           "label": "Cargando reporte…"
         }
       ]
-    },
-    "#taxan/income-mxn||#taxan/income-usd||#taxan/balance-mxn||#taxan/balance-usd": {
-      "stylesheets": [
-        {
-          "href": "taxan-sitemap.xslt",
-          "target": "@#shell main"
-        }
-      ],
-      "resumable": false
     },
     "#server:taxan": {
       "credentials": "include",
@@ -108,6 +114,38 @@
           "label": "Cargando reporte…"
         }
       ]
+    },
+    "#server:taxanIncome": {
+      "credentials": "include",
+      "cache": "no-store",
+      "resumable": false,
+      "rejectCodes": 400,
+      "headers": {
+        "Accept": "application/xml"
+      },
+      "trackers": [
+        {
+          "label": "Cargando reporte…"
+        }
+      ]
+    },
+    "#taxan/income-mxn": {
+      "stylesheets": [
+        {
+          "href": "taxan-income-2026.xslt",
+          "target": "@#shell main"
+        }
+      ],
+      "resumable": false
+    },
+    "#taxan/income-usd||#taxan/balance-mxn||#taxan/balance-usd": {
+      "stylesheets": [
+        {
+          "href": "taxan-sitemap.xslt",
+          "target": "@#shell main"
+        }
+      ],
+      "resumable": false
     }
   }
 }

@@ -179,8 +179,8 @@ window.addEventListener('failure', event => {
     if (response?.status !== 401 || !statusCodes) return;
     const url = new URL(response.url);
     const action = url.searchParams.get('action');
-    const taxanEndpoint = new URL(xo.manifest.server.taxan);
-    const isTaxan = url.origin === taxanEndpoint.origin && url.pathname === taxanEndpoint.pathname &&
+    const taxanEndpoints = [xo.manifest.server.taxan, xo.manifest.server.taxanIncome].map(value => new URL(value));
+    const isTaxan = taxanEndpoints.some(endpoint => url.origin === endpoint.origin && url.pathname === endpoint.pathname) &&
         (action === 'soaddi-balances' || url.searchParams.get('FROM') === 'fin.GetReportAccountBalances');
     const isGuestReport = action === 'report' && url.origin === new URL(xo.manifest.server.request).origin;
     if (!isTaxan && !isGuestReport) return;
@@ -232,6 +232,22 @@ Object.defineProperty(xo.session, 'login', {
                 throw new Error('El servidor no confirmó el inicio de sesión.');
             }
             user = result.user_login;
+            if (user === 'taxan') {
+                try {
+                    const preview = await fetch(endpoints.taxanIncomeLogin, {
+                        method: 'POST', credentials: 'include', cache: 'no-store',
+                        headers: { Accept: 'application/json', Authorization: 'Basic ' + auth }
+                    });
+                    if (!preview.ok || (await preview.json()).user_login !== 'taxan') {
+                        throw new Error('No se pudo iniciar la sesión de Income MXN.');
+                    }
+                } catch (error) {
+                    await fetch(endpoints.taxanLogout.replace(/^POSTs+/i, ''), {
+                        method: 'POST', credentials: 'include', cache: 'no-store'
+                    }).catch(() => {});
+                    throw error;
+                }
+            }
         } catch (error) {
             xo.session.status = 'unauthorized';
             throw error;
@@ -280,7 +296,11 @@ Object.defineProperty(xo.session, 'logout', {
         const endpoints = xo.manifest.server;
         const endpoint = (xo.session.user_login === 'taxan' && endpoints.taxanLogout || endpoints.logout).replace(/^POST\s+/i, '');
         const response = await fetch(endpoint, { method: 'POST', credentials: 'include', cache: 'no-store' });
-        if (!response.ok) throw new Error('No se pudo cerrar la sesión.');
+        if (!response.ok && response.status !== 401) throw new Error('No se pudo cerrar la sesión.');
+        if (xo.session.user_login === 'taxan') {
+            const preview = await fetch(endpoints.taxanIncomeLogout, { method: 'POST', credentials: 'include', cache: 'no-store' });
+            if (!preview.ok && preview.status !== 401) throw new Error('No se pudo cerrar la sesión de Income MXN.');
+        }
         await showDemoLogin();
     }, writable: true, configurable: true
 });
