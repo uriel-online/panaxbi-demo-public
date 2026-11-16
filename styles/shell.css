@@ -3144,3 +3144,13 @@ body:has(.report-loader) #shell .portal-shell-header .menu_toggle[aria-expanded=
   flex: none;
   margin: 0;
 }
+/* Taxan uses main as the scroll container for both datagrid axes. */
+@media screen {
+    #shell > main:has(.taxan-report) {
+        overflow: auto;
+    }
+
+    #shell .taxan-report .excel-scroll {
+        overflow: visible;
+    }
+}

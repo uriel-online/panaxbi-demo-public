@@ -39,3 +39,42 @@ table thead.freeze td.freeze, table thead.freeze th.freeze {
 table thead.freeze td.freeze img, table thead.freeze th.freeze img {
     z-index: 912;
 }
+@media screen {
+    /* Opt in on a table. Freeze the entire header so its rows keep their natural heights. */
+    #shell .datagrid-freeze > thead.freeze {
+        position: sticky;
+        inset-block-start: 0;
+        z-index: 3;
+        background: var(--datagrid-freeze-background, #fff);
+    }
+
+    #shell .datagrid-freeze > thead.freeze > tr > :is(td, th) {
+        inset-block-start: auto;
+        top: auto;
+        z-index: auto;
+    }
+
+    /* Mark individual cells, or opt in to the first column for the whole table. */
+    #shell .datagrid-freeze > :is(thead, tbody) > tr > :is(td, th).freeze,
+    #shell .datagrid-freeze.freeze-first-column > :is(thead, tbody) > tr >
+        :is(td, th):first-child:not([colspan]):not([rowspan]) {
+        position: sticky;
+        inset-inline-start: var(--datagrid-freeze-inline-start, 0px);
+        z-index: 2;
+        background-color: var(--datagrid-freeze-background, #fff);
+    }
+
+    #shell .datagrid-freeze > thead.freeze > tr > :is(td, th).freeze,
+    #shell .datagrid-freeze.freeze-first-column > thead.freeze > tr >
+        :is(td, th):first-child:not([colspan]):not([rowspan]) {
+        z-index: 4;
+    }
+}
+
+@media print {
+    #shell .datagrid-freeze > thead.freeze,
+    #shell .datagrid-freeze > thead.freeze > tr > :is(td, th),
+    #shell .datagrid-freeze > tbody > tr > :is(td, th).freeze {
+        position: static;
+    }
+}

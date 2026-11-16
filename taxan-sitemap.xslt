@@ -204,11 +204,12 @@
 .taxan-report .excel-sheet .xl254 {font-size:9.0pt; font-weight:700; text-align:center; vertical-align:middle; border:.5pt solid windowtext; background:yellow;}.taxan-report [hidden]{display:none!important}</style>
         <xsl:call-template name="taxan-navbar">
           <xsl:with-param name="years" select="$years"/>
+          <xsl:with-param name="single-year" select="@id = 'income-mxn' or @id = 'income-usd'"/>
         </xsl:call-template>
         <div class="excel-scroll">
           <xsl:choose>
             <xsl:when test="@id='income-mxn'">
-              <table class="excel-sheet" data-report="income-mxn">
+              <table class="excel-sheet datagrid-freeze freeze-first-column" data-report="income-mxn">
                 <colgroup>
                   <col width="244" style="mso-width-source:userset;mso-width-alt:8923; width:183pt" class="xl69"/>
                   <col width="109" style="mso-width-source:userset;mso-width-alt:3986; mso-outline-level:1;mso-outline-parent:collapsed;width:82pt" class="xl70" data-year="2025"/>
@@ -224,7 +225,7 @@
                   <col width="112" style="mso-width-source:userset;mso-width-alt:4096; width:84pt" class="xl72" data-year="2026"/>
                   <col width="74" style="mso-width-source:userset;mso-width-alt:2706; mso-outline-level:1;mso-outline-parent:collapsed;width:56pt" class="xl73" data-year="2026"/>
                 </colgroup>
-                <tbody>
+                <thead class="freeze">
                   <tr style="height:12.75pt" height="17" data-row="1">
                     <td style="width:183pt" class="xl69">
                       <xsl:choose>
@@ -376,7 +377,7 @@
                           <xsl:value-of select="format-number(number('Income Statements 2025'),'#,##0;(#,##0)')"/>
                         </xsl:when>
                         <xsl:otherwise>
-                          <xsl:value-of select="'Income Statements 2025'"/>
+                          <xsl:text>Income Statements </xsl:text><span data-taxan-income-year="true"/>
                         </xsl:otherwise>
                       </xsl:choose>
                     </td>
@@ -745,7 +746,7 @@
                           <xsl:value-of select="'Dec'"/>
                         </xsl:otherwise>
                       </xsl:choose>
-                    </td><td data-year="2024" style="border-left:none" class="xl87"></td><td data-year="2023" style="border-left:none" class="xl87"></td>
+                    </td><td data-year="2024" style="border-left:none" class="xl87">Total anual</td><td data-year="2023" style="border-left:none" class="xl87">Total anual</td>
                     <td data-year="2026" style="border-left:none" class="xl87">
                       <xsl:choose>
                         <xsl:when test="'text'='number'">
@@ -777,6 +778,8 @@
                       </xsl:choose>
                     </td>
                   </tr>
+                </thead>
+                <tbody>
                   <tr style="height:12.0pt" height="16" data-row="7">
                     <td class="xl93">
                       <xsl:choose>
@@ -877,7 +880,7 @@
                           <xsl:value-of select="''"/>
                         </xsl:otherwise>
                       </xsl:choose>
-                    </td><td data-year="2024" class="xl70">2024</td><td data-year="2023" class="xl70">2023</td>
+                    </td><td data-year="2024" class="xl70"></td><td data-year="2023" class="xl70"></td>
                     <td data-year="2026" class="xl70">
                       <xsl:choose>
                         <xsl:when test="'text'='number'">
@@ -80495,7 +80498,7 @@
               </table>
             </xsl:when>
             <xsl:when test="@id='income-usd'">
-              <table class="excel-sheet" data-report="income-usd">
+              <table class="excel-sheet datagrid-freeze freeze-first-column" data-report="income-usd">
                 <colgroup>
                   <col width="244" style="mso-width-source:userset;mso-width-alt:8923; width:183pt" class="xl69"/>
                   <col width="98" style="mso-width-source:userset;mso-width-alt:3584; mso-outline-level:1;width:74pt" class="xl74" data-year="2025"/>
@@ -80511,7 +80514,7 @@
                   <col width="108" style="mso-width-source:userset;mso-width-alt:3949; width:81pt" class="xl74" data-year="2026"/>
                   <col width="81" style="mso-width-source:userset;mso-width-alt:2962; mso-outline-level:1;width:61pt" class="xl74" data-year="2026"/>
                 </colgroup>
-                <tbody>
+                <thead class="freeze">
                   <tr style="height:12.75pt" height="17" data-row="1">
                     <td style="width:183pt" class="xl69">
                       <xsl:choose>
@@ -80663,7 +80666,7 @@
                           <xsl:value-of select="format-number(number('Income Statements 2025'),'#,##0;(#,##0)')"/>
                         </xsl:when>
                         <xsl:otherwise>
-                          <xsl:value-of select="'Income Statements 2025'"/>
+                          <xsl:text>Income Statements </xsl:text><span data-taxan-income-year="true"/>
                         </xsl:otherwise>
                       </xsl:choose>
                     </td>
@@ -81032,7 +81035,7 @@
                           <xsl:value-of select="'Dec'"/>
                         </xsl:otherwise>
                       </xsl:choose>
-                    </td><td data-year="2024" style="border-top:none;border-left:none" class="xl92"></td><td data-year="2023" style="border-top:none;border-left:none" class="xl92"></td>
+                    </td><td data-year="2024" style="border-top:none;border-left:none" class="xl92">Total anual</td><td data-year="2023" style="border-top:none;border-left:none" class="xl92">Total anual</td>
                     <td data-year="2026" style="border-top:none" class="xl92">
                       <xsl:choose>
                         <xsl:when test="'text'='number'">
@@ -81064,6 +81067,8 @@
                       </xsl:choose>
                     </td>
                   </tr>
+                </thead>
+                <tbody>
                   <tr style="height:12.0pt" height="16" data-row="7">
                     <td class="xl93">
                       <xsl:choose>
@@ -81164,7 +81169,7 @@
                           <xsl:value-of select="''"/>
                         </xsl:otherwise>
                       </xsl:choose>
-                    </td><td data-year="2024" class="xl70">2024</td><td data-year="2023" class="xl70">2023</td>
+                    </td><td data-year="2024" class="xl70"></td><td data-year="2023" class="xl70"></td>
                     <td data-year="2026" class="xl70">
                       <xsl:choose>
                         <xsl:when test="'text'='number'">
@@ -160792,7 +160797,7 @@
               </table>
             </xsl:when>
             <xsl:when test="@id='balance-mxn'">
-              <table class="excel-sheet" data-report="balance-mxn">
+              <table class="excel-sheet datagrid-freeze freeze-first-column" data-report="balance-mxn">
                 <colgroup>
                   <col width="102" style="mso-width-source:userset;mso-width-alt:3730;width:77pt"/>
                   <col width="309" style="mso-width-source:userset;mso-width-alt:11300; width:232pt" class="xl142"/>
@@ -160805,7 +160810,7 @@
                   <col width="49" style="mso-width-source:userset;mso-width-alt:1792; width:37pt" class="xl142"/>
                   <col width="113" style="mso-width-source:userset;mso-width-alt:4132; width:85pt" class="xl143" data-year="2025"/><col width="113" style="mso-width-source:userset;mso-width-alt:4132; width:85pt" class="xl143" data-year="2024"/><col width="113" style="mso-width-source:userset;mso-width-alt:4132; width:85pt" class="xl143" data-year="2023"/>
                 </colgroup>
-                <tbody>
+                <thead class="freeze">
                   <tr style="height:12.75pt" height="17" data-row="1">
                     <td style="height:12.75pt;width:77pt" height="17"/>
                     <td style="width:232pt" class="xl142">
@@ -161421,6 +161426,8 @@
                       </xsl:choose>
                     </td><td data-year="2024" class="xl149">2024</td><td data-year="2023" class="xl149">2023</td>
                   </tr>
+                </thead>
+                <tbody>
                   <tr style="height:12.75pt" height="17" data-row="11">
                     <td style="height:12.75pt" height="17"/>
                     <td>
@@ -165985,7 +165992,7 @@
               </table>
             </xsl:when>
             <xsl:when test="@id='balance-usd'">
-              <table class="excel-sheet" data-report="balance-usd">
+              <table class="excel-sheet datagrid-freeze freeze-first-column" data-report="balance-usd">
                 <colgroup>
                   <col width="102" style="mso-width-source:userset;mso-width-alt:3730;width:77pt"/>
                   <col width="309" style="mso-width-source:userset;mso-width-alt:11300; width:232pt" class="xl142"/>
@@ -165998,7 +166005,7 @@
                   <col width="49" style="mso-width-source:userset;mso-width-alt:1792; width:37pt" class="xl142"/>
                   <col width="113" style="mso-width-source:userset;mso-width-alt:4132; width:85pt" class="xl143" data-year="2025"/><col width="113" style="mso-width-source:userset;mso-width-alt:4132; width:85pt" class="xl143" data-year="2024"/><col width="113" style="mso-width-source:userset;mso-width-alt:4132; width:85pt" class="xl143" data-year="2023"/>
                 </colgroup>
-                <tbody>
+                <thead class="freeze">
                   <tr style="height:12.75pt" height="17" data-row="71">
                     <td style="height:12.75pt" height="17"/>
                     <td class="xl206">
@@ -166560,6 +166567,8 @@
                       </xsl:choose>
                     </td><td data-year="2024" class="xl149">2024</td><td data-year="2023" class="xl149">2023</td>
                   </tr>
+                </thead>
+                <tbody>
                   <tr style="height:12.75pt" height="17" data-row="80">
                     <td style="height:12.75pt" height="17"/>
                     <td>

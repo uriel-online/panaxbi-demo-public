@@ -39,7 +39,6 @@ async function progressiveRequest(params) {
         resumable: false,
         headers: { Accept: 'application/xml' }
     }).then(document => {
-        attachDemoStylesheet(document, '#estado_resultados_mensual');
         //delete params[key];
         let items = document.select(`/model/polizas|/model/presupuesto`).filter(item => item.firstElementChild);
         document.seed();
@@ -88,37 +87,12 @@ async function progressiveRequest(params) {
     return response;
 }
 
-async function dashboardRequest(params) {
-    const endpoint = new URL(xover.manifest.server.request);
-    for (const [key, value] of Object.entries(params || {})) {
-        if (value != null) endpoint.searchParams.set(key, value);
-    }
-    const request = trackReportRequest(endpoint.href, '#dashboardRequest');
-    try {
-        const response = await fetch(endpoint, {
-            credentials: 'include',
-            headers: { Accept: 'application/xml' }
-        });
-        if (await recoverGuestSession(response)) return;
-        if (!response.ok) throw response;
-
-        // Seed the large XML while detached to avoid queuing all its attributes as mutations.
-        const document = new DOMParser().parseFromString(await response.text(), 'application/xml');
-        if (document.documentElement.localName !== 'model') throw new Error('El servidor devolvió un tablero inesperado.');
-        document.seed();
-        attachDemoStylesheet(document, '#tablero_direccion');
-        return document;
-    } finally {
-        finishReportTrackers(request);
-    }
-}
-
 xo.listener.on('change::fecha/@mth', async function ({ element }) {
     let document = this.ownerDocument;
     let definition = document.source.definition;
     let yr = element.getAttribute("yr");
     let mth = element.getAttribute("mth");
-    const report = definition?.dashboardRequest || definition?.["server:request"];
+    const report = definition?.["server:request"];
     if (!report) return;
     report["@month"] = `${yr}${mth}`
     try {
@@ -172,15 +146,6 @@ for (const event of ['success', 'failure', 'abort']) {
     });
 }
 
-function trackReportRequest(endpoint, tag) {
-    const request = new xo.Request(new xo.URL(endpoint));
-    request.tags.add(tag);
-    mountReportTrackers(request, xo.manifest.getSettings(request, 'trackers'));
-    return request;
-}
-
-const taxanApi = 'https://server.panaxbi.com/';
-
 const guestReports = new Set(['#estado_resultados_mensual', '#tablero_direccion']);
 const taxanViews = new Set(['income-mxn', 'income-usd', 'balance-mxn', 'balance-usd']);
 
@@ -213,12 +178,15 @@ window.addEventListener('failure', event => {
     const { response, statusCodes } = event.detail || {};
     if (response?.status !== 401 || !statusCodes) return;
     const url = new URL(response.url);
-    const taxan = url.origin === new URL(taxanApi).origin && url.pathname === '/request.asp';
-    const guest = url.origin === new URL(xo.manifest.server.request).origin && url.searchParams.get('action') === 'report';
-    if (!taxan && !guest) return;
+    const action = url.searchParams.get('action');
+    const taxanEndpoint = new URL(xo.manifest.server.taxan);
+    const isTaxan = url.origin === taxanEndpoint.origin && url.pathname === taxanEndpoint.pathname &&
+        (action === 'soaddi-balances' || url.searchParams.get('FROM') === 'fin.GetReportAccountBalances');
+    const isGuestReport = action === 'report' && url.origin === new URL(xo.manifest.server.request).origin;
+    if (!isTaxan && !isGuestReport) return;
     statusCodes.ignored.push(401);
-    if (taxan) {
-        if (xo.session.user_login !== 'taxan' || !taxanView()) return;
+    if (isTaxan) {
+        if (!taxanView()) return;
         showDemoLogin(location.hash).catch(error => xo.dom.alert(error.message));
     } else {
         recoverGuestSession(response).catch(error => xo.dom.alert(error.message));
@@ -227,7 +195,20 @@ window.addEventListener('failure', event => {
 
 async function openDemoReport(route) {
     setDemoRoute(route);
-    if (route !== '#') await xo.stores.active.render();
+    if (route === '#') return;
+    try {
+        await xo.stores.active.render();
+    } catch (error) {
+        if (error?.status === 401) {
+            if (location.hash === '#login') return;
+            if (taxanView(location.hash) || xo.session.user_login === 'guest') {
+                await showDemoLogin(route);
+                return;
+            }
+        }
+        const status = error?.status;
+        xo.dom.alert(status ? `No se pudo cargar el reporte (HTTP ${status}).` : 'No se pudo cargar el reporte.');
+    }
 }
 
 Object.defineProperty(xo.session, 'login', {
@@ -235,18 +216,18 @@ Object.defineProperty(xo.session, 'login', {
         xo.session.status = 'authorizing';
         let user;
         try {
-            const endpoint = username.trim().toLowerCase() === 'taxan'
-                ? taxanApi + 'login.asp'
-                : xo.manifest.server.login.replace(/^POST\s+/i, '');
+            const endpoints = xo.manifest.server;
+            const endpoint = (username.trim().toLowerCase() === 'taxan' && endpoints.taxanLogin || endpoints.login).replace(/^POST\s+/i, '');
             const auth = btoa(String.fromCharCode(...new TextEncoder().encode(username + ':' + password)));
-            const login = await fetch(endpoint, {
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 credentials: 'include',
+                cache: 'no-store',
                 headers: { Accept: 'application/json', Authorization: 'Basic ' + auth }
             });
-            if (login.status === 401) throw new Error('Usuario o contraseña incorrectos.');
-            if (login.status === 429) throw new Error('Demasiados intentos. Vuelve a intentarlo en unos minutos.');
-            const result = login.ok ? await login.json() : null;
+            if (response.status === 401) throw new Error('Usuario o contraseña incorrectos.');
+            if (response.status === 429) throw new Error('Demasiados intentos. Vuelve a intentarlo en unos minutos.');
+            const result = response.ok ? await response.json() : null;
             if (result?.success !== true || !['taxan', 'guest'].includes(result.user_login)) {
                 throw new Error('El servidor no confirmó el inicio de sesión.');
             }
@@ -296,29 +277,13 @@ document.addEventListener('submit', async event => {
 
 Object.defineProperty(xo.session, 'logout', {
     value: async function () {
-        const endpoint = xo.session.user_login === 'taxan' ? taxanApi + 'logout.asp'
-            : xo.manifest.server.logout.replace(/^POST\s+/i, '');
-        const response = await fetch(endpoint, {
-            method: 'POST', credentials: 'include'
-        });
+        const endpoints = xo.manifest.server;
+        const endpoint = (xo.session.user_login === 'taxan' && endpoints.taxanLogout || endpoints.logout).replace(/^POST\s+/i, '');
+        const response = await fetch(endpoint, { method: 'POST', credentials: 'include', cache: 'no-store' });
         if (!response.ok) throw new Error('No se pudo cerrar la sesión.');
         await showDemoLogin();
     }, writable: true, configurable: true
 });
-
-function attachDemoStylesheet(document, tag) {
-    if (!document?.documentElement || document.documentElement.localName !== 'model') return;
-    const route = tag?.split('?', 1)[0];
-    if (route !== '#tablero_direccion' && route !== '#estado_resultados_mensual') return;
-    const href = new URL(route.slice(1) + '.xslt', location.href).href;
-    if (document.stylesheets?.some(sheet => sheet.href === href)) return;
-    document.addStylesheet({ href, target: "@#shell main" });
-}
-
-xo.listener.on('fetch::model[not(//processing-instruction())]', function ({ document, store, request }) {
-    const tag = store?.tag || request?.source?.tag || xover.site.seed;
-    attachDemoStylesheet(document, tag);
-})
 
 xo.listener.on('beforeRender', ({ dom }) => {
     dom?.querySelectorAll(".cell[fecha]").forEach(cell => { cell.setAttributes(cell.select("ancestor-or-self::*/@div[1]|ancestor-or-self::*/@rs[1]|ancestor-or-self::*/@un[1]|ancestor-or-self::*/@cta[1]|ancestor-or-self::*/@cl[1]|ancestor-or-self::*/@fecha[1]").reduce((obj, attr) => { obj[attr.name] = attr.value || ''; return obj }, {})) });
@@ -1461,7 +1426,7 @@ xo.listener.on(`change::@state:date`, function ({ value, event }) {
     let store = srcElement.store;
     if (!store) return;
     const definition = store.source.definition;
-    const report = definition?.dashboardRequest || definition?.["server:request"];
+    const report = definition?.["server:request"];
     if (!report) return;
     report["@month"] = value;
     store.document.fetch();
@@ -1494,7 +1459,15 @@ xo.listener.on('render', ({ element }) => {
     const shell = element.closest('#shell');
     if (!shell) return;
     const nav = element.querySelector('.taxan-filters');
-    if (nav) shell.querySelector(':scope > .taxan-navbar-slot')?.replaceChildren(nav);
+    if (nav) {
+        const slot = shell.querySelector(':scope > .taxan-navbar-slot');
+        const previous = slot?.querySelector('input[type=radio][data-taxan-year]:checked');
+        const selected = [...nav.querySelectorAll('input[type=radio][data-taxan-year]')]
+            .find(input => input.dataset.taxanYear === previous?.dataset.taxanYear);
+        if (selected) selected.checked = true;
+        slot?.replaceChildren(nav);
+        applyTaxanYears(nav, element);
+    }
     for (const report of shell.querySelectorAll('main .taxan-report')) {
         if (report !== element) report.remove();
     }
@@ -1504,17 +1477,14 @@ xo.listener.on('hashchange', () => {
     document.querySelector('#shell > .taxan-navbar-slot')?.replaceChildren();
 });
 
-document.addEventListener('change', event => {
-    const checkbox = event.target;
-    if (!checkbox.matches?.('input[data-taxan-year]')) return;
-    const nav = checkbox.closest('.taxan-filters');
-    const report = nav?.closest('#shell')?.querySelector('main .taxan-report');
-    if (!report) return;
+function applyTaxanYears(nav, report, changedInput) {
     const selected = new Set([...nav.querySelectorAll('input[data-taxan-year]:checked')].map(input => input.dataset.taxanYear));
     if (!selected.size) {
-        checkbox.checked = true;
+        if (changedInput) changedInput.checked = true;
         return;
     }
+    const titleYear = report.querySelector('[data-taxan-income-year]');
+    if (titleYear) titleYear.textContent = selected.values().next().value;
     for (const cell of report.querySelectorAll('.excel-sheet [data-year]')) {
         cell.hidden = !selected.has(cell.dataset.year);
     }
@@ -1523,6 +1493,14 @@ document.addEventListener('change', event => {
         cell.hidden = count === 0;
         cell.colSpan = Math.max(count, 1);
     }
+}
+
+document.addEventListener('change', event => {
+    const input = event.target;
+    if (!input.matches?.('input[data-taxan-year]')) return;
+    const nav = input.closest('.taxan-filters');
+    const report = nav?.closest('#shell')?.querySelector('main .taxan-report');
+    if (report) applyTaxanYears(nav, report, input);
 });
 
 const requested = location.hash === '#login' ? history.state?.returnTo : location.hash;
